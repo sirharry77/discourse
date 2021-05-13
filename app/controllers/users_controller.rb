@@ -1706,6 +1706,7 @@ class UsersController < ApplicationController
   end
 
   def bookmarks
+    return render(body: nil, status: 429)
     user = fetch_user_from_params
     guardian.ensure_can_edit!(user)
     user_guardian = Guardian.new(user)
