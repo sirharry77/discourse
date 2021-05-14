@@ -120,28 +120,33 @@ export default createWidget("quick-access-panel", {
       ? this.getItems().map((item) => this.itemHtml(item))
       : [this.emptyStatePlaceholderItem()];
 
-    let bottomItems = [];
+    const bottomItems = this.bottomItems();
+    return [h("ul", items), h("div.panel-body-bottom", bottomItems)];
+  },
 
-    if (!this.hideBottomItems()) {
-      const tab = I18n.t(this.attrs.titleKey).toLowerCase();
-
-      bottomItems.push(
-        // intentionally a link so it can be ctrl clicked
-        this.attach("link", {
-          title: "view_all",
-          titleOptions: { tab },
-          icon: "chevron-down",
-          label: this.settings.viewAllLabel,
-          className: "btn btn-default btn-icon no-text show-all",
-          "aria-label": "view_all",
-          ariaLabelOptions: { tab },
-          href: this.showAllHref(),
-        })
-      );
+  bottomItems() {
+    if (this.hideBottomItems()) {
+      return [];
     }
 
+    const items = [];
+    const tab = I18n.t(this.attrs.titleKey).toLowerCase();
+    items.push(
+      // intentionally a link so it can be ctrl clicked
+      this.attach("link", {
+        title: "view_all",
+        titleOptions: { tab },
+        icon: "chevron-down",
+        label: this.settings.viewAllLabel,
+        className: "btn btn-default btn-icon no-text show-all",
+        "aria-label": "view_all",
+        ariaLabelOptions: { tab },
+        href: this.showAllHref(),
+      })
+    );
+
     if (this.hasUnread()) {
-      bottomItems.push(
+      items.push(
         this.attach("button", {
           title: "user.dismiss_notifications_tooltip",
           icon: "check",
@@ -152,7 +157,7 @@ export default createWidget("quick-access-panel", {
       );
     }
 
-    return [h("ul", items), h("div.panel-body-bottom", bottomItems)];
+    return items;
   },
 
   getItems() {
