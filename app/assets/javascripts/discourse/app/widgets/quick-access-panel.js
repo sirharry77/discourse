@@ -73,7 +73,7 @@ export default createWidget("quick-access-panel", {
   },
 
   defaultState() {
-    return { items: [], loading: false, loaded: false };
+    return { items: [], loading: false, loaded: false, errorCode: null };
   },
 
   markRead() {
@@ -94,7 +94,10 @@ export default createWidget("quick-access-panel", {
 
     this.findNewItems()
       .then((newItems) => this.setItems(newItems))
-      .catch(() => this.setItems([]))
+      .catch((e) => {
+        this.setItems([]);
+        this.state.errorCode = e.jqXHR.status;
+      })
       .finally(() => {
         this.state.loading = false;
         this.state.loaded = true;
@@ -116,12 +119,31 @@ export default createWidget("quick-access-panel", {
       return [h("div.spinner-container", h("div.spinner"))];
     }
 
+    if (state.errorCode) {
+      return this.errorPanel();
+    }
+
+    const bottomItems = this.bottomItems();
+
     const items = this.getItems().length
       ? this.getItems().map((item) => this.itemHtml(item))
       : [this.emptyStatePlaceholderItem()];
 
-    const bottomItems = this.bottomItems();
     return [h("ul", items), h("div.panel-body-bottom", bottomItems)];
+  },
+
+  errorPanel() {
+    const retryButton = this.attach("button", {
+      title: "errors.buttons.again",
+      icon: "sync",
+      label: "errors.buttons.again",
+      className: "btn btn-default show-all",
+      action: "refreshNotifications",
+    });
+    return [
+      this.attach("error-state", { errorCode: this.state.errorCode }),
+      h("div.panel-body-bottom", retryButton),
+    ];
   },
 
   bottomItems() {
