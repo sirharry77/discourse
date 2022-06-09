@@ -308,13 +308,10 @@ export default Component.extend({
   },
 
   @discourseComputed("existingBookmarkHasReminder")
-  customTimeShortcutLabels(existingBookmarkHasReminder) {
-    const labels = {};
-    if (existingBookmarkHasReminder) {
-      labels[TIME_SHORTCUT_TYPES.NONE] =
-        "bookmarks.remove_reminder_keep_bookmark";
-    }
-    return labels;
+  noneOptionCustomLabel(existingBookmarkHasReminder) {
+    return existingBookmarkHasReminder
+      ? "bookmarks.remove_reminder_keep_bookmark"
+      : null;
   },
 
   @discourseComputed("editingExistingBookmark", "existingBookmarkHasReminder")

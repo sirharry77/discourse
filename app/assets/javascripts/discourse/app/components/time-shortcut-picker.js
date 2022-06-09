@@ -79,7 +79,6 @@ export default Component.extend({
       userTimezone: this.currentUser.timezone,
       hiddenOptions: this.hiddenOptions || [],
       customOptions: this.customOptions || [],
-      customLabels: this.customLabels || {},
     });
 
     if (this.prefilledDatetime) {
@@ -170,10 +169,10 @@ export default Component.extend({
   @discourseComputed(
     "timeShortcuts",
     "hiddenOptions",
-    "customLabels",
+    "noneOptionLabel",
     "userTimezone"
   )
-  options(timeShortcuts, hiddenOptions, customLabels, userTimezone) {
+  options(timeShortcuts, hiddenOptions, noneOptionLabel, userTimezone) {
     this._loadLastUsedCustomDatetime();
 
     let options;
@@ -188,15 +187,19 @@ export default Component.extend({
       this.siteSettings
     );
 
-    let specialOptions = specialShortcutOptions();
+    const specialOptions = specialShortcutOptions();
     if (this.lastCustomDate && this.lastCustomTime) {
-      let lastCustom = specialOptions.findBy(
+      const lastCustom = specialOptions.findBy(
         "id",
         TIME_SHORTCUT_TYPES.LAST_CUSTOM
       );
       lastCustom.time = this.parsedLastCustomDatetime;
       lastCustom.timeFormatKey = "dates.long_no_year";
       lastCustom.hidden = false;
+    }
+    if (noneOptionLabel) {
+      const noneOption = specialOptions.findBy("id", TIME_SHORTCUT_TYPES.NONE);
+      noneOption.label = noneOptionLabel;
     }
     options = options.concat(specialOptions);
 
@@ -208,7 +211,6 @@ export default Component.extend({
       });
     }
 
-    this._applyCustomLabels(options, customLabels);
     options.forEach((o) => (o.timeFormatted = formatTime(o)));
     return options;
   },
@@ -257,14 +259,6 @@ export default Component.extend({
     if (this.onTimeSelected) {
       this.onTimeSelected(type, dateTime);
     }
-  },
-
-  _applyCustomLabels(options, customLabels) {
-    options.forEach((option) => {
-      if (customLabels[option.id]) {
-        option.label = customLabels[option.id];
-      }
-    });
   },
 
   _formatTime(options) {
