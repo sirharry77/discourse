@@ -14,7 +14,6 @@ import PreloadStore from "discourse/lib/preload-store";
 import { Promise } from "rsvp";
 import RestModel from "discourse/models/rest";
 import Singleton from "discourse/mixins/singleton";
-import Site from "discourse/models/site";
 import UserAction from "discourse/models/user-action";
 import UserActionStat from "discourse/models/user-action-stat";
 import UserBadge from "discourse/models/user-badge";
