@@ -84,7 +84,7 @@ const DiscoveryCategoriesRoute = DiscourseRoute.extend(OpenComposer, {
 
       if (categoriesList && topicsList) {
         if (topicsList.topic_list?.top_tags) {
-          this.site.top_tags = topicsList.topic_list.top_tags;
+          this.site.set("top_tags", topicsList.topic_list.top_tags);
         }
 
         return EmberObject.create({
@@ -101,7 +101,7 @@ const DiscoveryCategoriesRoute = DiscourseRoute.extend(OpenComposer, {
       // Otherwise, return the ajax result
       return ajax(`/categories_and_${filter}`).then((result) => {
         if (result.topic_list?.top_tags) {
-          this.site.top_tags = result.topic_list.top_tags;
+          this.site.set("top_tags", result.topic_list.top_tags);
         }
 
         return EmberObject.create({
