@@ -6,7 +6,9 @@ import {
 } from "discourse/lib/time-utils";
 import {
   TIME_SHORTCUT_TYPES,
-  defaultShortcutOptions,
+  defaultTimeShortcuts,
+  formatTime,
+  hideDynamicTimeShortcuts,
   specialShortcutOptions,
 } from "discourse/lib/time-shortcut";
 import discourseComputed, {
@@ -57,7 +59,6 @@ export default Component.extend({
   selectedDatetime: null,
   prefilledDatetime: null,
 
-  additionalOptionsToShow: null,
   hiddenOptions: null,
   customOptions: null,
 
@@ -75,8 +76,7 @@ export default Component.extend({
   _setupPicker() {
     this.setProperties({
       customTime: this.defaultCustomReminderTime,
-      userTimezone: this.currentUser.resolvedTimezone(this.currentUser),
-      additionalOptionsToShow: this.additionalOptionsToShow || [],
+      userTimezone: this.currentUser.timezone,
       hiddenOptions: this.hiddenOptions || [],
       customOptions: this.customOptions || [],
       customLabels: this.customLabels || {},
@@ -168,62 +168,36 @@ export default Component.extend({
   },
 
   @discourseComputed(
-    "additionalOptionsToShow",
+    "timeShortcuts",
     "hiddenOptions",
-    "customOptions",
     "customLabels",
     "userTimezone"
   )
-  options(
-    additionalOptionsToShow,
-    hiddenOptions,
-    customOptions,
-    customLabels,
-    userTimezone
-  ) {
+  options(timeShortcuts, hiddenOptions, customLabels, userTimezone) {
     this._loadLastUsedCustomDatetime();
 
-    let options = defaultShortcutOptions(userTimezone);
-
-    if (additionalOptionsToShow.length > 0) {
-      options.forEach((opt) => {
-        if (additionalOptionsToShow.includes(opt.id)) {
-          opt.hidden = false;
-        }
-      });
+    let options;
+    if (timeShortcuts && timeShortcuts.length) {
+      options = timeShortcuts;
+    } else {
+      options = defaultTimeShortcuts(userTimezone);
     }
-
-    customOptions.forEach((opt) => {
-      if (!opt.timeFormatted && opt.time) {
-        opt.timeFormatted = opt.time.format(I18n.t(opt.timeFormatKey));
-      }
-    });
-
-    options = options.concat(customOptions);
-    options.sort((a, b) => {
-      if (a.time < b.time) {
-        return -1;
-      }
-      if (a.time > b.time) {
-        return 1;
-      }
-      return 0;
-    });
+    options = hideDynamicTimeShortcuts(
+      options,
+      userTimezone,
+      this.siteSettings
+    );
 
     let specialOptions = specialShortcutOptions();
-
     if (this.lastCustomDate && this.lastCustomTime) {
       let lastCustom = specialOptions.findBy(
         "id",
         TIME_SHORTCUT_TYPES.LAST_CUSTOM
       );
       lastCustom.time = this.parsedLastCustomDatetime;
-      lastCustom.timeFormatted = this.parsedLastCustomDatetime.format(
-        I18n.t("dates.long_no_year")
-      );
+      lastCustom.timeFormatKey = "dates.long_no_year";
       lastCustom.hidden = false;
     }
-
     options = options.concat(specialOptions);
 
     if (hiddenOptions.length > 0) {
@@ -234,12 +208,8 @@ export default Component.extend({
       });
     }
 
-    options.forEach((option) => {
-      if (customLabels[option.id]) {
-        option.label = customLabels[option.id];
-      }
-    });
-
+    this._applyCustomLabels(options, customLabels);
+    options.forEach((o) => (o.timeFormatted = formatTime(o)));
     return options;
   },
 
@@ -287,5 +257,21 @@ export default Component.extend({
     if (this.onTimeSelected) {
       this.onTimeSelected(type, dateTime);
     }
+  },
+
+  _applyCustomLabels(options, customLabels) {
+    options.forEach((option) => {
+      if (customLabels[option.id]) {
+        option.label = customLabels[option.id];
+      }
+    });
+  },
+
+  _formatTime(options) {
+    options.forEach((option) => {
+      if (option.time && option.timeFormatKey) {
+        option.timeFormatted = option.time.format(I18n.t(option.timeFormatKey));
+      }
+    });
   },
 });

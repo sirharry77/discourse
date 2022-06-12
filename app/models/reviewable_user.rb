@@ -12,7 +12,7 @@ class ReviewableUser < Reviewable
   def build_actions(actions, guardian, args)
     return unless pending?
 
-    if guardian.can_approve?(target) || args[:approved_by_invite]
+    if guardian.can_approve?(target)
       actions.add(:approve_user) do |a|
         a.icon = 'user-plus'
         a.label = "reviewables.actions.approve_user.title"
@@ -31,7 +31,7 @@ class ReviewableUser < Reviewable
     if args[:send_email] != false && SiteSetting.must_approve_users?
       Jobs.enqueue(
         :critical_user_email,
-        type: :signup_after_approval,
+        type: "signup_after_approval",
         user_id: target.id
       )
     end

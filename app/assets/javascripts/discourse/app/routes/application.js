@@ -17,7 +17,17 @@ import showModal from "discourse/lib/show-modal";
 
 function unlessReadOnly(method, message) {
   return function () {
-    if (this.site.get("isReadOnly")) {
+    if (this.site.isReadOnly) {
+      bootbox.alert(message);
+    } else {
+      this[method]();
+    }
+  };
+}
+
+function unlessStrictlyReadOnly(method, message) {
+  return function () {
+    if (this.site.isReadOnly && !this.site.isStaffWritesOnly) {
       bootbox.alert(message);
     } else {
       this[method]();
@@ -35,6 +45,10 @@ const ApplicationRoute = DiscourseRoute.extend(OpenComposer, {
       ajax(userPath("toggle-anon"), { type: "POST" }).then(() => {
         window.location.reload();
       });
+    },
+
+    toggleSidebar() {
+      this.controllerFor("application").toggleProperty("showSidebar");
     },
 
     toggleMobileView() {
@@ -56,11 +70,6 @@ const ApplicationRoute = DiscourseRoute.extend(OpenComposer, {
         tokens.push(this.shortSiteDescription);
       }
       this.documentTitle.setTitle(tokens.join(" - "));
-    },
-
-    // We need an empty method here for Ember to fire the action properly on all routes.
-    willTransition() {
-      this._super(...arguments);
     },
 
     postWasEnqueued(details) {
@@ -115,7 +124,7 @@ const ApplicationRoute = DiscourseRoute.extend(OpenComposer, {
       return true;
     },
 
-    showLogin: unlessReadOnly(
+    showLogin: unlessStrictlyReadOnly(
       "handleShowLogin",
       I18n.t("read_only_mode.login_disabled")
     ),

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe Jobs::PendingReviewablesReminder do
   let(:job) { described_class.new }
 
@@ -23,6 +21,20 @@ describe Jobs::PendingReviewablesReminder do
     it "never notifies" do
       create_flag(50.hours.ago)
       expect(execute.sent_reminder).to eq(false)
+    end
+  end
+
+  context "notify_about_flags_after accepts a float" do
+    before { SiteSetting.notify_about_flags_after = 0.25 }
+
+    it "doesn't send message when flags are less than 15 minutes old" do
+      create_flag(14.minutes.ago)
+      expect(execute.sent_reminder).to eq(false)
+    end
+
+    it "sends message when there is a flag older than 15 minutes" do
+      create_flag(16.minutes.ago)
+      expect(execute.sent_reminder).to eq(true)
     end
   end
 
@@ -73,6 +85,18 @@ describe Jobs::PendingReviewablesReminder do
         SiteSetting.reviewable_default_visibility = 'medium'
         expect(execute.sent_reminder).to eq(true)
       end
+    end
+
+    it 'deletes previous messages' do
+      GroupMessage.create(
+        Group[:moderators].name, 'reviewables_reminder',
+        { limit_once_per: false, message_params: { mentions: '', count: 1 } }
+      )
+
+      create_flag(49.hours.ago)
+      execute
+
+      expect(Topic.where(title: I18n.t("system_messages.reviewables_reminder.subject_template")).count).to eq(1)
     end
   end
 end

@@ -107,7 +107,6 @@ sw:
       next_month: "Mwezi Ujao"
       placeholder: tarehe
     share:
-      post: "taarifa #%{postNumber}"
       close: "funga"
     action_codes:
       public_topic: "ameifanya hii mada isiwe ya siri %{when}"
@@ -231,8 +230,6 @@ sw:
       remove: "Ondoa Alamisho"
       confirm_clear: "Una uhakika unataka kuondoa mialamisho ya mada hii?"
       save: "hifadhi"
-      auto_delete_preference:
-        never: "Kamwe"
       search: "Tafuta"
     drafts:
       remove: "Ondoa"
@@ -271,8 +268,8 @@ sw:
     switch_to_anon: "Ingia Hali-tumizi Isiyojulikana"
     switch_from_anon: "Ondoka kwenye Hali-tumizi Isiyojulikana"
     banner:
-      close: "Puuzia bango hili."
-      edit: "Hariri bango hili >>"
+      close: "Puuzia bango hili"
+      edit: "Hariri"
     choose_topic:
       none_found: "Hakuna mada zilizopatikana."
     review:
@@ -338,7 +335,10 @@ sw:
       tomorrow: "Kesho"
       later_this_week: "Baada ya mda ndani ya wiki hii"
       this_weekend: "Wikiendi hii"
+      next_week: "Wiki Ijayo"
       next_month: "Mwezi ujao"
+      forever: "Milele"
+      select_timeframe: "Chagua fremu ya mda"
     user_action:
       user_posted_topic: "<a href='%{userUrl}'>%{mtumiaji}</a> amechapisha <a href='%{topicUrl}'>mada</a>"
       you_posted_topic: "<a href='%{userUrl}'>Ume</a> chapisha <a href='%{topicUrl}'>mada</a>"
@@ -852,10 +852,8 @@ sw:
         daily: "kila siku"
         weekly: "kila wiki"
       email_level:
-        title: "Tuma barua pepe mtu akinukulu, akijibu chapisho langu, akitaja @jina langu, au akinialika kwenye mada."
         always: "mara kwa mara"
         never: "kamwe"
-      email_messages_level: "Nitumie barua pepe mtu akinitumia ujumbe"
       include_tl0_in_digests: "Tia ndani maandishi kutoka kwa watumiaji wapya kwenye muhtasari wa barua pepe"
       email_in_reply_to: "Jumuisha dhana ya majibu ya posti kwenye barua pepe"
       other_settings: "Zingine"
@@ -991,6 +989,8 @@ sw:
         sent_by: "Imetumwa na"
         private_message: "ujumbe"
         the_topic: "mada"
+    user_status:
+      save: "hifadhi"
     loading: "Inapakia..."
     errors:
       prev_page: "ikiwa inajaribu kupakia"
@@ -1114,19 +1114,14 @@ sw:
       not_approved: "Akaunti yako bado haijathibitishwa. Utapata ujumbe kwa barua pepe ukiwa tayari kuingia."
       google_oauth2:
         name: "Google"
-        title: "na Google"
       twitter:
         name: "Twitter"
-        title: "na Twitter"
       instagram:
         name: "Instagram"
-        title: "na Instagram"
       facebook:
         name: "Facebook"
-        title: "na Facebook"
       github:
         name: "GitHub"
-        title: "na Github"
       discord:
         name: "Matatizo"
     invites:
@@ -1139,7 +1134,6 @@ sw:
       success: "Akaunti yako imetengenezwa na sasa unaweza kuingia."
       name_label: "Jina"
       password_label: "Nywila"
-      optional_description: "(sio muhimu)"
     password_reset:
       continue: "endelea kwenye %{site_name}"
     emoji_set:
@@ -1209,9 +1203,6 @@ sw:
       group_mentioned:
         one: "Kwa kutaja %{group}, utamjulisha <a href='%{group_link}'>mtu mmoja</a> – una uhakika?"
         other: "Kwa kutaja %{group}, utawajulisha <a href='%{group_link}'>%{count} watu</a> – una uhakika?"
-      cannot_see_mention:
-        category: "Umetaja %{username} ila hawatajulishwa kwa kuwa hawapo kwenye kundi hili. Itabidi waongezwe kwenye kundi ambalo lina fursa ya kusoma maudhui ya kundi hili."
-        private: "Umetaja %{username} lakini hawatajulishwa kwa sababu hawana uwezo wa kuona hii meseji binafsi. Unahitaji kuwaalika kuona hii mesaji binafsi."
       duplicate_link: "Inaonekana linki yako <b>%{domain}</b> imechapishwa tayari kwenye topiki na <b>@%{username}</b> kwenye <a href='%{post_url}'>jibu la %{ago}</a> – una uhakina unataka kuchapisha tena?"
       error:
         title_missing: "Kichwa cha habari ni muhimu"
@@ -1279,9 +1270,6 @@ sw:
         reply_as_new_topic:
           label: Jibu kama mada iliyounganishwa
           desc: Tengeneza mada mpya itakayoungwa na hii mada
-        reply_as_private_message:
-          label: Ujumbe mpya
-          desc: Tengeneza ujumbe binafsi mpya
         reply_to_topic:
           label: Jibu mada
           desc: Jibu mada, sio chapisho lolote tu
@@ -1439,7 +1427,6 @@ sw:
         clear_all: "Ondoa Zote"
         unlist_topics: "Ondoa Mada kwenye listi"
         relist_topics: "Orodhesha Upya Mada"
-        reset_read: "Anzisha Upya Usomaji"
         delete: "Futa Mada"
         dismiss: "Ondosha..."
         dismiss_read: "Ondosha zote ambazo hazijasomwa"
@@ -1542,17 +1529,6 @@ sw:
         remove: "Ondoa Kipima Mda"
         publish_to: "Chapisha kwenda Kwa:"
         when: "Lini:"
-      auto_update_input:
-        none: "Chagua fremu ya mda"
-        later_today: "Baada ya mda leo"
-        tomorrow: "Kesho"
-        later_this_week: "Baada ya mda ndani ya wiki hii"
-        this_weekend: "Wikiendi hii"
-        next_week: "Wiki Ijayo"
-        next_month: "Mwezi ujao"
-        forever: "Milele"
-        pick_date_and_time: "Chagua tarehe na mda"
-        set_based_on_last_post: "Funga kulingana na chapisho la mwisho"
       publish_to_category:
         title: "Panga Uchapishaji"
       temp_open:
@@ -1581,16 +1557,9 @@ sw:
         replies_short: "%{current} / %{total}"
       progress:
         title: maendeleo ya mada
-        go_top: "juu"
-        go_bottom: "chini"
-        go: "nenda"
-        jump_bottom: "fikia chapisho la mwisho"
         jump_prompt: "ruka kwenda..."
         jump_prompt_long: "Ruka kwenda..."
-        jump_bottom_with_number: "fikia chapisho %{post_number}"
         jump_prompt_or: "au"
-        total: jumla ya machapisho
-        current: chapisho la hivi karibuni
       notifications:
         title: badilisha mara ngapi utapata taarifa kuhusu mada hii
         reasons:
@@ -1645,8 +1614,6 @@ sw:
         unpin: "Ondoa Mada..."
         unarchive: "Ondoa Mada kwenye Nyaraka"
         archive: "Weka Mada kwenye Nyaraka"
-        invisible: "Ondoa Orodha"
-        visible: "Tengeneza Orodha"
         reset_read: "Anzisha Upya Usomaji wa Taarifa"
         make_private: "Tengeneza Ujumbe Binafsi"
       feature:
@@ -1658,7 +1625,6 @@ sw:
         title: "Jibu"
         help: "anza kuandika jibu lako kwenye mada hii"
       share:
-        title: "Gawiza"
         help: "gawiza kiungo kwenye mada hii"
         invite_users: "Mualiko"
       print:
@@ -1897,6 +1863,8 @@ sw:
       tags: "Lebo"
       tags_placeholder: "(Sio muhimu) orodha ya lebo zilizoruhusiwa."
       tag_groups_placeholder: "(Sio muhimu) orodha ya vikundi vyenye lebo zilizoruhusiwa."
+      required_tag_group:
+        delete: "Futa"
       delete: "Futa Kategoria"
       create: "Kategoria Mpya"
       create_long: "Tengeneza kategoria mpya"
@@ -2031,6 +1999,9 @@ sw:
       unlisted:
         help: "Mada hii imeondolewa kwenye orodha. Haitaonyeshwa kwenye orodha za mada, na njia pekee ya kuifia ni kupitia kiungo chake"
     posts: "Machapisho"
+    pending_posts:
+      label: "subiria"
+      label_with_count: "(%{count}) zinasubiria"
     original_post: "Chapisho la Kwanza"
     views: "Imeonwa"
     views_lowercase:
@@ -2211,8 +2182,7 @@ sw:
       add_synonyms: "Ongeza"
       delete_tag: "futa lebo"
       delete_confirm_no_topics: "Una uhakika unataka kufuta lebo hii?"
-      rename_tag: "Badili jina la lebo"
-      rename_instructions: "Chagua jina jipya la lebo"
+      description: "Maelezo"
       sort_by: "Pangilia kwa:"
       sort_by_count: "hesabu"
       sort_by_name: "jina"
@@ -2280,6 +2250,21 @@ sw:
       no_activity_others: "Hakuna shughuli."
       no_replies_others: "Hakuna majibu."
       no_likes_others: "Hakuna machapisho yaliyopendwa."
+    sidebar:
+      unread_count: "%{count} haijasomwa"
+      new_count: "Mada mpya %{count}"
+      sections:
+        categories:
+          header_link_title: "kategoria zote"
+          header_link_text: "Kategoria"
+        topics:
+          header_link_title: "nyumbani"
+          header_link_text: "Mada"
+          links:
+            tracked:
+              content: "Imefuatiliwa"
+            my_posts:
+              content: "Machapisho Yangu"
   admin_js:
     type_to_filter: "andika kuchuja..."
     admin:
@@ -2561,7 +2546,6 @@ sw:
         new_style: "Style Mpya"
         delete: "Ondoa"
         color: "Rangi"
-        copy: "Nakili"
         copy_to_clipboard: "Umenakili kwenye Ubao Nakili"
         copied_to_clipboard: "Umenakili kwenye Ubao Nakili"
         copy_to_clipboard_error: "Hitilafu imetokea wakati wa kunakili taarifa kwenye ubao nakili."

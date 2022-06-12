@@ -109,7 +109,7 @@ module Email
       ).pluck_first(:id)
 
       # always set a default Message ID from the host
-      @message.header['Message-ID'] = "<#{SecureRandom.uuid}@#{host}>"
+      @message.header['Message-ID'] = Email::MessageIdService.generate_default
 
       if topic_id.present? && post_id.present?
         post = Post.find_by(id: post_id, topic_id: topic_id)
@@ -121,15 +121,21 @@ module Email
         return skip(SkippedEmailLog.reason_types[:sender_topic_deleted]) if topic.blank?
 
         add_attachments(post)
-        first_post = topic.ordered_posts.first
 
-        topic_message_id = first_post.incoming_email&.message_id.present? ?
-          "<#{first_post.incoming_email.message_id}>" :
-          "<topic/#{topic_id}@#{host}>"
-
-        post_message_id = post.incoming_email&.message_id.present? ?
-          "<#{post.incoming_email.message_id}>" :
-          "<topic/#{topic_id}/#{post_id}@#{host}>"
+        # If the topic was created from an incoming email, then the Message-ID from
+        # that email will be the canonical reference, otherwise the canonical reference
+        # will be <topic/TOPIC_ID@host>. The canonical reference is used in the
+        # References header.
+        #
+        # This is so the sender of the original email still gets their nice threading
+        # maintained (because their mail client will initiate threading based on
+        # the Message-ID it generated) in the case where there is an incoming email.
+        #
+        # In the latter case, everyone will start their thread with the canonical reference,
+        # because we send it in the References header for all emails.
+        topic_canonical_reference_id = Email::MessageIdService.generate_for_topic(
+          topic, canonical: true, use_incoming_email_if_present: true
+        )
 
         referenced_posts = Post.includes(:incoming_email)
           .joins("INNER JOIN post_replies ON post_replies.post_id = posts.id ")
@@ -141,23 +147,29 @@ module Email
             "<#{referenced_post.incoming_email.message_id}>"
           else
             if referenced_post.post_number == 1
-              "<topic/#{topic_id}@#{host}>"
+              topic_canonical_reference_id
             else
-              "<topic/#{topic_id}/#{referenced_post.id}@#{host}>"
+              Email::MessageIdService.generate_for_post(referenced_post)
             end
           end
         end
 
-        # https://www.ietf.org/rfc/rfc2822.txt
+        # See https://www.ietf.org/rfc/rfc2822.txt for the message format
+        # specification, more useful information can be found in Email::MessageIdService
+        #
+        # The References header is how mail clients handle threading. The Message-ID
+        # must always be unique.
         if post.post_number == 1
-          @message.header['Message-ID']  = topic_message_id
+          @message.header['Message-ID']  = Email::MessageIdService.generate_for_topic(topic)
+          @message.header['References']  = [topic_canonical_reference_id]
         else
-          @message.header['Message-ID']  = post_message_id
-          @message.header['In-Reply-To'] = referenced_post_message_ids[0] || topic_message_id
-          @message.header['References']  = [topic_message_id, referenced_post_message_ids].flatten.compact.uniq
+          @message.header['Message-ID']  = Email::MessageIdService.generate_for_post(post)
+          @message.header['In-Reply-To'] = referenced_post_message_ids[0] || topic_canonical_reference_id
+          @message.header['References']  = [topic_canonical_reference_id, referenced_post_message_ids].flatten.compact.uniq
         end
 
-        # https://www.ietf.org/rfc/rfc2919.txt
+        # See https://www.ietf.org/rfc/rfc2919.txt for the List-ID
+        # specification.
         if topic&.category && !topic.category.uncategorized?
           list_id = "#{SiteSetting.title} | #{topic.category.name} <#{topic.category.name.downcase.tr(' ', '-')}.#{host}>"
 
@@ -214,6 +226,26 @@ module Email
       end
 
       MessageBuilder.custom_headers(SiteSetting.email_custom_headers).each do |key, _|
+        # Any custom headers added via MessageBuilder that are doubled up here
+        # with values that we determine should be set to the last value, which is
+        # the one we determined. Our header values should always override the email_custom_headers.
+        #
+        # While it is valid via RFC5322 to have more than one value for certain headers,
+        # we just want to keep it to one, especially in cases where the custom value
+        # would conflict with our own.
+        #
+        # See https://datatracker.ietf.org/doc/html/rfc5322#section-3.6 and
+        # https://github.com/mikel/mail/blob/8ef377d6a2ca78aa5bd7f739813f5a0648482087/lib/mail/header.rb#L109-L132
+        custom_header = @message.header[key]
+        if custom_header.is_a?(Array)
+          our_value = custom_header.last.value
+
+          # Must be set to nil first otherwise another value is just added
+          # to the array of values for the header.
+          @message.header[key] = nil
+          @message.header[key] = our_value
+        end
+
         value = header_value(key)
 
         # Remove Auto-Submitted header for group private message emails, it does
@@ -421,6 +453,15 @@ module Email
     def header_value(name)
       header = @message.header[name]
       return nil unless header
+
+      # NOTE: In most cases this is not a problem, but if a header has
+      # doubled up the header[] method will return an array. So we always
+      # get the last value of the array and assume that is the correct
+      # value.
+      #
+      # See https://github.com/mikel/mail/blob/8ef377d6a2ca78aa5bd7f739813f5a0648482087/lib/mail/header.rb#L109-L132
+      return header.last.value if header.is_a?(Array)
+
       header.value
     end
 
@@ -454,8 +495,7 @@ module Email
       # via group SMTP and if reply by email site settings are configured
       return if !user_id || !post_id || !header_value(Email::MessageBuilder::ALLOW_REPLY_BY_EMAIL_HEADER).present?
 
-      # use safe variant here cause we tend to see concurrency issue
-      reply_key = PostReplyKey.find_or_create_by_safe!(
+      PostReplyKey.create_or_find_by!(
         post_id: post_id,
         user_id: user_id
       ).reply_key

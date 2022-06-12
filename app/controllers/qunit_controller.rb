@@ -8,9 +8,13 @@ class QunitController < ApplicationController
   }
   layout false
 
-  # only used in test / dev
+  def is_ember_cli_proxy?
+    request.headers["HTTP_X_DISCOURSE_EMBER_CLI"] == "true"
+  end
+
+  # only used in non-ember-cli test / dev
   def index
-    raise Discourse::NotFound.new if request.headers["HTTP_X_DISCOURSE_EMBER_CLI"] == "true"
+    raise Discourse::NotFound.new if is_ember_cli_proxy? || EmberCli.enabled?
     raise Discourse::InvalidAccess.new if Rails.env.production?
   end
 

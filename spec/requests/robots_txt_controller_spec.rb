@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 RSpec.describe RobotsTxtController do
   describe '#builder' do
     it "returns json information for building a robots.txt" do
@@ -53,17 +51,6 @@ RSpec.describe RobotsTxtController do
 
         get '/robots.txt'
         expect(response.body).to include("\nDisallow: /forum/email/")
-      end
-    end
-
-    context 'crawl delay' do
-      it 'allows you to set crawl delay on particular bots' do
-        SiteSetting.allow_index_in_robots_txt = true
-        SiteSetting.slow_down_crawler_rate = 17
-        SiteSetting.slow_down_crawler_user_agents = 'bingbot|googlebot'
-        get '/robots.txt'
-        expect(response.body).to include("\nUser-agent: bingbot\nCrawl-delay: 17")
-        expect(response.body).to include("\nUser-agent: googlebot\nCrawl-delay: 17")
       end
     end
 
@@ -142,6 +129,37 @@ RSpec.describe RobotsTxtController do
       get '/robots.txt'
       expect(response.status).to eq(200)
       expect(response.body).to eq(SiteSetting.overridden_robots_txt)
+    end
+
+    describe 'sitemap' do
+      let(:sitemap_line) { "Sitemap: #{Discourse.base_protocol}://#{Discourse.current_hostname}/sitemap.xml" }
+
+      it 'include sitemap location when enabled' do
+        SiteSetting.enable_sitemap = true
+        SiteSetting.login_required = false
+
+        get '/robots.txt'
+
+        expect(response.body).to include(sitemap_line)
+      end
+
+      it "doesn't include sitemap location when disabled" do
+        SiteSetting.enable_sitemap = false
+        SiteSetting.login_required = false
+
+        get '/robots.txt'
+
+        expect(response.body).not_to include(sitemap_line)
+      end
+
+      it "doesn't include sitemap location when site has login_required enabled" do
+        SiteSetting.enable_sitemap = true
+        SiteSetting.login_required = true
+
+        get '/robots.txt'
+
+        expect(response.body).not_to include(sitemap_line)
+      end
     end
   end
 end

@@ -1,4 +1,5 @@
-import { classify, dasherize } from "@ember/string";
+/* eslint-disable no-undef */
+import { classify, dasherize, decamelize } from "@ember/string";
 import deprecated from "discourse-common/lib/deprecated";
 import { findHelper } from "discourse-common/lib/helpers";
 import { get } from "@ember/object";
@@ -65,7 +66,7 @@ export function buildResolver(baseName) {
       if (fullName === "app-events:main") {
         deprecated(
           "`app-events:main` has been replaced with `service:app-events`",
-          { since: "2.4.0" }
+          { since: "2.4.0", dropFrom: "2.9.0.beta1" }
         );
         return "service:app-events";
       }
@@ -169,6 +170,10 @@ export function buildResolver(baseName) {
       return this.customResolve(parsedName) || this._super(parsedName);
     },
 
+    resolveRawView(parsedName) {
+      return this.customResolve(parsedName) || this._super(parsedName);
+    },
+
     resolveRoute(parsedName) {
       if (parsedName.fullNameWithoutType === "basic") {
         return requirejs("discourse/routes/discourse", null, null, true)
@@ -234,7 +239,7 @@ export function buildResolver(baseName) {
     findTemplate(parsedName) {
       const withoutType = parsedName.fullNameWithoutType,
         slashedType = withoutType.replace(/\./g, "/"),
-        decamelized = withoutType.decamelize(),
+        decamelized = decamelize(withoutType),
         dashed = decamelized.replace(/\./g, "-").replace(/\_/g, "-"),
         templates = Ember.TEMPLATES;
 
@@ -253,7 +258,7 @@ export function buildResolver(baseName) {
     },
 
     findUnderscoredTemplate(parsedName) {
-      let decamelized = parsedName.fullNameWithoutType.decamelize();
+      let decamelized = decamelize(parsedName.fullNameWithoutType);
       let underscored = decamelized.replace(/\-/g, "_");
       return Ember.TEMPLATES[underscored];
     },
@@ -261,7 +266,7 @@ export function buildResolver(baseName) {
     // Try to find a template within a special admin namespace, e.g. adminEmail => admin/templates/email
     // (similar to how discourse lays out templates)
     findAdminTemplate(parsedName) {
-      let decamelized = parsedName.fullNameWithoutType.decamelize();
+      let decamelized = decamelize(parsedName.fullNameWithoutType);
       if (decamelized.indexOf("components") === 0) {
         let comPath = `admin/templates/${decamelized}`;
         const compTemplate =

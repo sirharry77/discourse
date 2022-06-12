@@ -14,6 +14,8 @@ class Users::OmniauthCallbacksController < ApplicationController
   # will not have a CSRF token, however the payload is all validated so its safe
   skip_before_action :verify_authenticity_token, only: :complete
 
+  allow_in_staff_writes_only_mode :complete
+
   def confirm_request
     self.class.find_authenticator(params[:provider])
     render locals: { hide_auth_buttons: true }
@@ -22,6 +24,7 @@ class Users::OmniauthCallbacksController < ApplicationController
   def complete
     auth = request.env["omniauth.auth"]
     raise Discourse::NotFound unless request.env["omniauth.auth"]
+    raise Discourse::ReadOnly if @readonly_mode && !staff_writes_only_mode?
 
     auth[:session] = session
 
@@ -69,6 +72,8 @@ class Users::OmniauthCallbacksController < ApplicationController
     @auth_result.authenticator_name = authenticator.name
 
     return render_auth_result_failure if @auth_result.failed?
+
+    raise Discourse::ReadOnly if staff_writes_only_mode? && !@auth_result.user&.staff?
 
     complete_response_data
 
@@ -155,9 +160,8 @@ class Users::OmniauthCallbacksController < ApplicationController
         user.update!(password: SecureRandom.hex)
 
         # Ensure there is an active email token
-        unless EmailToken.where(email: user.email, confirmed: true).exists? ||
-          user.email_tokens.active.where(email: user.email).exists?
-          user.email_tokens.create!(email: user.email)
+        if !EmailToken.where(email: user.email, confirmed: true).exists? && !user.email_tokens.active.where(email: user.email).exists?
+          user.email_tokens.create!(email: user.email, scope: EmailToken.scopes[:signup])
         end
 
         user.activate
@@ -172,6 +176,7 @@ class Users::OmniauthCallbacksController < ApplicationController
     elsif Guardian.new(user).can_access_forum? && user.active # log on any account that is active with forum access
       begin
         user.save! if @auth_result.apply_user_attributes!
+        @auth_result.apply_associated_attributes!
       rescue ActiveRecord::RecordInvalid => e
         @auth_result.failed = true
         @auth_result.failed_reason = e.record.errors.full_messages.join(", ")

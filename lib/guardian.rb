@@ -47,6 +47,9 @@ class Guardian
     def silenced?
       false
     end
+    def is_system_user?
+      false
+    end
     def secure_category_ids
       []
     end
@@ -422,6 +425,7 @@ class Guardian
   def can_send_private_message?(target, notify_moderators: false)
     is_user = target.is_a?(User)
     is_group = target.is_a?(Group)
+    from_system = @user.is_system_user?
 
     (is_group || is_user) &&
     # User is authenticated
@@ -435,7 +439,7 @@ class Guardian
     # Can't send PMs to suspended users
     (is_staff? || is_group || !target.suspended?) &&
     # Check group messageable level
-    (is_staff? || is_user || Group.messageable(@user).where(id: target.id).exists? || notify_moderators) &&
+    (from_system || is_user || Group.messageable(@user).where(id: target.id).exists? || notify_moderators) &&
     # Silenced users can only send PM to staff
     (!is_silenced? || target.staff?)
   end
@@ -550,6 +554,10 @@ class Guardian
     @user.has_trust_level_or_staff?(SiteSetting.min_trust_level_for_here_mention)
   end
 
+  def is_me?(other)
+    other && authenticated? && other.is_a?(User) && @user == other
+  end
+
   private
 
   def is_my_own?(obj)
@@ -560,10 +568,6 @@ class Guardian
     end
 
     false
-  end
-
-  def is_me?(other)
-    other && authenticated? && other.is_a?(User) && @user == other
   end
 
   def is_not_me?(other)

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe UserCardSerializer do
   context "with a TL0 user seen as anonymous" do
     let(:user) { Fabricate.build(:user, trust_level: 0, user_profile: Fabricate.build(:user_profile)) }
@@ -35,6 +33,64 @@ describe UserCardSerializer do
       json = described_class.new(user, scope: Guardian.new(user2), root: false).as_json
       expect(json[:secondary_emails]).to be_nil
       expect(json[:unconfirmed_emails]).to be_nil
+    end
+  end
+
+  describe "#pending_posts_count" do
+    let(:user) { Fabricate(:user) }
+    let(:serializer) { described_class.new(user, scope: guardian, root: false) }
+    let(:json) { serializer.as_json }
+
+    context "when guardian is another user" do
+      let(:guardian) { Guardian.new(other_user) }
+
+      context "when other user is not a staff member" do
+        let(:other_user) { Fabricate(:user) }
+
+        it "does not serialize pending_posts_count" do
+          expect(json.keys).not_to include :pending_posts_count
+        end
+      end
+
+      context "when other user is a staff member" do
+        let(:other_user) { Fabricate(:user, moderator: true) }
+
+        it "serializes pending_posts_count" do
+          expect(json[:pending_posts_count]).to eq 0
+        end
+      end
+    end
+
+    context "when guardian is the current user" do
+      let(:guardian) { Guardian.new(user) }
+
+      it "serializes pending_posts_count" do
+        expect(json[:pending_posts_count]).to eq 0
+      end
+    end
+
+  end
+
+  describe "#status" do
+    fab!(:user_status) { Fabricate(:user_status) }
+    fab!(:user) { Fabricate(:user, user_status: user_status) }
+    let(:serializer) { described_class.new(user, scope: Guardian.new(user), root: false) }
+
+    it "serializes when enabled" do
+      SiteSetting.enable_user_status = true
+
+      json = serializer.as_json
+
+      expect(json[:status]).to_not be_nil do |status|
+        expect(status.description).to eq(user_status.description)
+        expect(status.emoji).to eq(user_status.emoji)
+      end
+    end
+
+    it "doesn't serialize when disabled" do
+      SiteSetting.enable_user_status = false
+      json = serializer.as_json
+      expect(json.keys).not_to include :status
     end
   end
 end

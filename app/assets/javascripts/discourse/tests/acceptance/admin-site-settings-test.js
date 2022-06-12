@@ -13,6 +13,9 @@ import {
 } from "@ember/test-helpers";
 import siteSettingFixture from "discourse/tests/fixtures/site-settings";
 import { test } from "qunit";
+import pretender from "discourse/tests/helpers/create-pretender";
+
+const ENTER_KEYCODE = 13;
 
 acceptance("Admin - Site Settings", function (needs) {
   let updatedTitle;
@@ -69,46 +72,46 @@ acceptance("Admin - Site Settings", function (needs) {
       1,
       "filter returns 1 site setting"
     );
-    assert.ok(!exists(".row.setting.overridden"), "setting isn't overriden");
+    assert.ok(!exists(".row.setting.overridden"), "setting isn't overridden");
 
     await fillIn(".input-setting-string", "Test");
     await click("button.cancel");
     assert.ok(
       !exists(".row.setting.overridden"),
-      "canceling doesn't mark setting as overriden"
+      "canceling doesn't mark setting as overridden"
     );
 
     await fillIn(".input-setting-string", "Test");
     await click("button.ok");
     assert.ok(
       exists(".row.setting.overridden"),
-      "saving marks setting as overriden"
+      "saving marks setting as overridden"
     );
 
     await click("button.undo");
     assert.ok(
       !exists(".row.setting.overridden"),
-      "setting isn't marked as overriden after undo"
+      "setting isn't marked as overridden after undo"
     );
 
     await click("button.cancel");
     assert.ok(
       exists(".row.setting.overridden"),
-      "setting is marked as overriden after cancel"
+      "setting is marked as overridden after cancel"
     );
 
     await click("button.undo");
     await click("button.ok");
     assert.ok(
       !exists(".row.setting.overridden"),
-      "setting isn't marked as overriden after undo"
+      "setting isn't marked as overridden after undo"
     );
 
     await fillIn(".input-setting-string", "Test");
-    await triggerKeyEvent(".input-setting-string", "keydown", 13); // enter
+    await triggerKeyEvent(".input-setting-string", "keydown", ENTER_KEYCODE);
     assert.ok(
       exists(".row.setting.overridden"),
-      "saving via Enter key marks setting as overriden"
+      "saving via Enter key marks setting as overridden"
     );
   });
 
@@ -161,6 +164,32 @@ acceptance("Admin - Site Settings", function (needs) {
     assert.strictEqual(
       currentURL(),
       "/admin/site_settings/category/all_results?filter=contact"
+    );
+  });
+
+  test("filters * and ? for domain lists", async (assert) => {
+    pretender.put("/admin/site_settings/blocked_onebox_domains", () => [200]);
+
+    await visit("/admin/site_settings");
+    await fillIn("#setting-filter", "domains");
+
+    await click(".select-kit-header.multi-select-header");
+
+    await fillIn(".select-kit-filter input", "cat.?.domain");
+    await triggerKeyEvent(".select-kit-filter input", "keydown", ENTER_KEYCODE);
+
+    await fillIn(".select-kit-filter input", "*.domain");
+    await triggerKeyEvent(".select-kit-filter input", "keydown", ENTER_KEYCODE);
+
+    await fillIn(".select-kit-filter input", "proper.com");
+    await triggerKeyEvent(".select-kit-filter input", "keydown", ENTER_KEYCODE);
+
+    await click("button.ok");
+
+    assert.strictEqual(
+      pretender.handledRequests[pretender.handledRequests.length - 1]
+        .requestBody,
+      "blocked_onebox_domains=proper.com"
     );
   });
 });

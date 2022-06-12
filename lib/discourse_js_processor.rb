@@ -8,6 +8,10 @@ class DiscourseJsProcessor
     @@plugin_transpile_paths ||= Set.new
   end
 
+  def self.ember_cli?(filename)
+    filename.include?("/app/assets/javascripts/discourse/dist/")
+  end
+
   def self.call(input)
     root_path = input[:load_path] || ''
     logical_path = (input[:filename] || '').sub(root_path, '').gsub(/\.(js|es6).*$/, '').sub(/^\//, '')
@@ -18,8 +22,15 @@ class DiscourseJsProcessor
     end
 
     # add sourceURL until we can do proper source maps
-    unless Rails.env.production?
-      data = "eval(#{data.inspect} + \"\\n//# sourceURL=#{logical_path}\");\n"
+    if !Rails.env.production? && !ember_cli?(input[:filename])
+      plugin_name = root_path[/\/plugins\/([\w-]+)\/assets/, 1]
+      source_url = if plugin_name
+        "plugins/#{plugin_name}/assets/javascripts/#{logical_path}"
+      else
+        logical_path
+      end
+
+      data = "eval(#{data.inspect} + \"\\n//# sourceURL=#{source_url}\");\n"
     end
 
     { data: data }
@@ -32,6 +43,9 @@ class DiscourseJsProcessor
 
   def self.should_transpile?(filename)
     filename ||= ''
+
+    # skip ember cli
+    return false if ember_cli?(filename)
 
     # es6 is always transpiled
     return true if filename.end_with?(".es6") || filename.end_with?(".es6.erb")

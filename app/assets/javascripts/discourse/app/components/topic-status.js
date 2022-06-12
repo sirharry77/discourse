@@ -2,8 +2,11 @@ import Component from "@ember/component";
 import I18n from "I18n";
 import discourseComputed from "discourse-common/utils/decorators";
 import { iconHTML } from "discourse-common/lib/icon-library";
+import { htmlSafe } from "@ember/template";
 
 export default Component.extend({
+  disableActions: false,
+
   classNames: ["topic-statuses"],
 
   click(e) {
@@ -77,7 +80,7 @@ export default Component.extend({
   },
 
   _set(name, icon, key, iconArgs = null) {
-    this.set(`${name}Icon`, iconHTML(`${icon}`, iconArgs).htmlSafe());
+    this.set(`${name}Icon`, htmlSafe(iconHTML(`${icon}`, iconArgs)));
     this.set(`${name}Title`, I18n.t(`topic_statuses.${key}.help`));
     return true;
   },

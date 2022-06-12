@@ -135,11 +135,14 @@ class TagsController < ::ApplicationController
     tag = Tag.find_by_name(params[:tag_id])
     raise Discourse::NotFound if tag.nil?
 
-    new_tag_name = DiscourseTagging.clean_tag(params[:tag][:id])
-    tag.name = new_tag_name
+    if (params[:tag][:id].present?)
+      new_tag_name = DiscourseTagging.clean_tag(params[:tag][:id])
+      tag.name = new_tag_name
+    end
+    tag.description = params[:tag][:description] if params[:tag]&.has_key?(:description)
     if tag.save
       StaffActionLogger.new(current_user).log_custom('renamed_tag', previous_value: params[:tag_id], new_value: new_tag_name)
-      render json: { tag: { id: new_tag_name } }
+      render json: { tag: { id: tag.name, description: tag.description } }
     else
       render_json_error tag.errors.full_messages
     end
@@ -243,9 +246,10 @@ class TagsController < ::ApplicationController
       filter_params[:order_popularity] = true
     end
 
-    tags_with_counts = DiscourseTagging.filter_allowed_tags(
+    tags_with_counts, filter_result_context = DiscourseTagging.filter_allowed_tags(
       guardian,
-      filter_params
+      **filter_params,
+      with_context: true
     )
 
     tags = self.class.tag_counts_json(tags_with_counts, show_pm_tags: guardian.can_tag_pms?)
@@ -276,6 +280,10 @@ class TagsController < ::ApplicationController
           json_response[:forbidden_message] = I18n.t("tags.forbidden.in_this_category", tag_name: tag.name)
         end
       end
+    end
+
+    if required_tag_group = filter_result_context[:required_tag_group]
+      json_response[:required_tag_group] = required_tag_group
     end
 
     render json: json_response
@@ -353,6 +361,8 @@ class TagsController < ::ApplicationController
       {
         id: t.name,
         text: t.name,
+        name: t.name,
+        description: t.description,
         count: t.topic_count,
         pm_count: show_pm_tags ? t.pm_topic_count : 0,
         target_tag: t.target_tag_id ? target_tags.find { |x| x.id == t.target_tag_id }&.name : nil
@@ -370,14 +380,15 @@ class TagsController < ::ApplicationController
       @filter_on_category = Category.query_category(slug_or_id, nil)
     end
 
-    guardian.ensure_can_see!(@filter_on_category)
-
     if !@filter_on_category
       permalink = Permalink.find_by_url("c/#{params[:category_slug_path_with_id]}")
       if permalink.present? && permalink.category_id
         return redirect_to "#{Discourse::base_path}/tags#{permalink.target_url}/#{params[:tag_id]}", status: :moved_permanently
       end
+    end
 
+    if !(@filter_on_category && guardian.can_see?(@filter_on_category))
+      # 404 on 'access denied' to avoid leaking existence of category
       raise Discourse::NotFound
     end
   end

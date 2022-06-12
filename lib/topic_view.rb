@@ -33,8 +33,10 @@ class TopicView
     :message_bus_last_id,
     :queued_posts_enabled,
     :personal_message,
-    :can_review_topic
+    :can_review_topic,
+    :page
   )
+  alias queued_posts_enabled? queued_posts_enabled
 
   attr_accessor(
     :draft,
@@ -44,6 +46,9 @@ class TopicView
     :post_custom_fields,
     :post_number
   )
+
+  delegate :category, to: :topic, allow_nil: true, private: true
+  delegate :require_reply_approval?, to: :category, prefix: true, allow_nil: true, private: true
 
   def self.print_chunk_size
     1000
@@ -146,7 +151,7 @@ class TopicView
     @draft_sequence = DraftSequence.current(@user, @draft_key)
 
     @can_review_topic = @guardian.can_review_topic?(@topic)
-    @queued_posts_enabled = NewPostManager.queue_enabled?
+    @queued_posts_enabled = NewPostManager.queue_enabled? || category_require_reply_approval?
     @personal_message = @topic.private_message?
   end
 
@@ -408,8 +413,8 @@ class TopicView
   end
 
   def bookmarks
-    @bookmarks ||= @topic.bookmarks.where(user: @user).joins(:topic).select(
-      :id, :post_id, "topics.id AS topic_id", :for_topic, :reminder_at, :name, :auto_delete_preference
+    @bookmarks ||= Bookmark.for_user_in_topic(@user, @topic.id).select(
+      :id, :bookmarkable_id, :bookmarkable_type, :reminder_at, :name, :auto_delete_preference
     )
   end
 
@@ -505,10 +510,6 @@ class TopicView
 
   def links
     @links ||= TopicLink.topic_map(@guardian, @topic.id)
-  end
-
-  def user_post_bookmarks
-    @user_post_bookmarks ||= @topic.bookmarks.where(user: @user)
   end
 
   def reviewable_counts
@@ -854,6 +855,14 @@ class TopicView
         OR posts.id IN (SELECT pr.reply_post_id FROM post_replies pr WHERE pr.post_id = :post_id)', { post_number: @replies_to_post_number.to_i, post_id: post_id })
 
       @contains_gaps = true
+    end
+
+    # Show Only Top Level Replies
+    if @filter_top_level_replies.present?
+      @filtered_posts = @filtered_posts.where('
+        posts.post_number > 1
+        AND posts.reply_to_post_number IS NULL
+      ')
     end
 
     # Filtering upwards

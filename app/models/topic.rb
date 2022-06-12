@@ -11,6 +11,8 @@ class Topic < ActiveRecord::Base
   include LimitedEdit
   extend Forwardable
 
+  EXTERNAL_ID_MAX_LENGTH = 50
+
   self.ignored_columns = [
     "avg_time", # TODO(2021-01-04): remove
     "image_url" # TODO(2021-06-01): remove
@@ -195,6 +197,8 @@ class Topic < ActiveRecord::Base
     end
   end
 
+  validates :external_id, allow_nil: true, uniqueness: { case_sensitive: false }, length: { maximum: EXTERNAL_ID_MAX_LENGTH }, format: { with: /\A[\w-]+\z/ }
+
   before_validation do
     self.title = TextCleaner.clean_title(TextSentinel.title_sentinel(title).text) if errors[:title].empty?
     self.featured_link = self.featured_link.strip.presence if self.featured_link
@@ -203,7 +207,11 @@ class Topic < ActiveRecord::Base
   belongs_to :category
   has_many :category_users, through: :category
   has_many :posts
-  has_many :bookmarks, through: :posts
+
+  # NOTE: To get all Post _and_ Topic bookmarks for a topic by user,
+  # use the Bookmark.for_user_in_topic scope.
+  has_many :bookmarks, as: :bookmarkable
+
   has_many :ordered_posts, -> { order(post_number: :asc) }, class_name: "Post"
   has_many :topic_allowed_users
   has_many :topic_allowed_groups
@@ -318,6 +326,7 @@ class Topic < ActiveRecord::Base
 
   attr_accessor :ignore_category_auto_close
   attr_accessor :skip_callbacks
+  attr_accessor :advance_draft
 
   before_create do
     initialize_default_values
@@ -326,7 +335,7 @@ class Topic < ActiveRecord::Base
   after_create do
     unless skip_callbacks
       changed_to_category(category)
-      advance_draft_sequence
+      advance_draft_sequence if advance_draft
     end
   end
 
@@ -1182,11 +1191,26 @@ class Topic < ActiveRecord::Base
     }
   end
 
+  cattr_accessor :slug_computed_callbacks
+  self.slug_computed_callbacks = []
+
+  def slug_for_topic(title)
+    return '' unless title.present?
+    slug = Slug.for(title)
+
+    # this is a hook for plugins that need to modify the generated slug
+    self.class.slug_computed_callbacks.each do |callback|
+      slug = callback.call(self, slug, title)
+    end
+
+    slug
+  end
+
   # Even if the slug column in the database is null, topic.slug will return something:
   def slug
     unless slug = read_attribute(:slug)
       return '' unless title.present?
-      slug = Slug.for(title)
+      slug = slug_for_topic(title)
       if new_record?
         write_attribute(:slug, slug)
       else
@@ -1207,7 +1231,7 @@ class Topic < ActiveRecord::Base
   end
 
   def title=(t)
-    slug = Slug.for(t.to_s)
+    slug = slug_for_topic(t.to_s)
     write_attribute(:slug, slug)
     write_attribute(:fancy_title, nil)
     write_attribute(:title, t)
@@ -1743,14 +1767,14 @@ class Topic < ActiveRecord::Base
     email_addresses.to_a
   end
 
-  def create_invite_notification!(target_user, notification_type, username)
+  def create_invite_notification!(target_user, notification_type, username, post_number: 1)
     invited_by = User.find_by_username(username)
     ensure_can_invite!(target_user, invited_by)
 
     target_user.notifications.create!(
       notification_type: notification_type,
       topic_id: self.id,
-      post_number: 1,
+      post_number: post_number,
       data: {
         topic_title: self.title,
         display_username: username,
@@ -1887,13 +1911,14 @@ end
 #  excerpt                   :string
 #  pinned_globally           :boolean          default(FALSE), not null
 #  pinned_until              :datetime
-#  fancy_title               :string(400)
+#  fancy_title               :string
 #  highest_staff_post_number :integer          default(0), not null
 #  featured_link             :string
 #  reviewable_score          :float            default(0.0), not null
 #  image_upload_id           :bigint
 #  slow_mode_seconds         :integer          default(0), not null
 #  bannered_until            :datetime
+#  external_id               :string
 #
 # Indexes
 #
@@ -1903,6 +1928,7 @@ end
 #  index_topics_on_bannered_until          (bannered_until) WHERE (bannered_until IS NOT NULL)
 #  index_topics_on_bumped_at_public        (bumped_at) WHERE ((deleted_at IS NULL) AND ((archetype)::text <> 'private_message'::text))
 #  index_topics_on_created_at_and_visible  (created_at,visible) WHERE ((deleted_at IS NULL) AND ((archetype)::text <> 'private_message'::text))
+#  index_topics_on_external_id             (external_id) UNIQUE WHERE (external_id IS NOT NULL)
 #  index_topics_on_id_and_deleted_at       (id,deleted_at)
 #  index_topics_on_id_filtered_banner      (id) UNIQUE WHERE (((archetype)::text = 'banner'::text) AND (deleted_at IS NULL))
 #  index_topics_on_image_upload_id         (image_upload_id)

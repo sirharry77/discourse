@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe Report do
   let(:user) { Fabricate(:user) }
   let(:c0) { Fabricate(:category, user: user) }
@@ -211,7 +209,7 @@ describe Report do
       end
 
       context "with #{request_type}" do
-        before(:each) do
+        before do
           freeze_time DateTime.parse('2017-03-01 12:00')
           application_requests = [
             { date: 35.days.ago.to_time, req_type: ApplicationRequest.req_types[request_type.to_s], count: 35 },
@@ -522,11 +520,12 @@ describe Report do
 
       before do
         freeze_time
-
-        PostActionCreator.new(flagger, post, PostActionType.types[:spam], message: 'bad').perform
       end
 
       it "returns a report with data" do
+        result = PostActionCreator.new(flagger, post, PostActionType.types[:spam], message: 'bad').perform
+
+        expect(result.success).to eq(true)
         expect(report.data).to be_present
 
         row = report.data[0]
@@ -895,7 +894,7 @@ describe Report do
 
       expect(report).to be_nil
 
-      expect(Rails.logger.errors).to eq([
+      expect(@fake_logger.errors).to eq([
         'Couldn’t create report `signups`: <ReportInitError x>'
       ])
     end
@@ -1187,11 +1186,6 @@ describe Report do
     before do
       freeze_time(Time.now.at_midnight)
       Theme.clear_default!
-      ApplicationRequest.clear_cache!
-    end
-
-    after do
-      ApplicationRequest.clear_cache!
     end
 
     let(:reports) { Report.find('consolidated_page_views') }
@@ -1205,12 +1199,22 @@ describe Report do
     end
 
     context "with data" do
-      it "works" do
+      before do
+        CachedCounting.reset
+        CachedCounting.enable
         ApplicationRequest.enable
+      end
+
+      after do
+        ApplicationRequest.disable
+        CachedCounting.disable
+      end
+      it "works" do
         3.times { ApplicationRequest.increment!(:page_view_crawler) }
         2.times { ApplicationRequest.increment!(:page_view_logged_in) }
         ApplicationRequest.increment!(:page_view_anon)
-        ApplicationRequest.write_cache!
+
+        CachedCounting.flush
 
         page_view_crawler_report = reports.data.find { |r| r[:req] == "page_view_crawler" }
         page_view_logged_in_report = reports.data.find { |r| r[:req] == "page_view_logged_in" }
@@ -1225,8 +1229,6 @@ describe Report do
         expect(page_view_anon_report[:color]).to eql("#40c8ff")
         expect(page_view_anon_report[:data][0][:y]).to eql(1)
       ensure
-        ApplicationRequest.disable
-        ApplicationRequest.clear_cache!
       end
     end
   end
@@ -1322,6 +1324,110 @@ describe Report do
 
         expect(report.data.length).to eq(1)
         expect(report.data[0][:extension]).to eq("jpg")
+      end
+    end
+  end
+
+  describe 'top_users_by_likes_received' do
+    let(:report) { Report.find('top_users_by_likes_received') }
+
+    include_examples 'no data'
+
+    context 'with data' do
+      before do
+        user_1 = Fabricate(:user, username: "jonah")
+        user_2 = Fabricate(:user, username: "jake")
+        user_3 = Fabricate(:user, username: "john")
+
+        3.times { UserAction.create!(user_id: user_1.id, action_type: UserAction::WAS_LIKED) }
+        9.times { UserAction.create!(user_id: user_2.id, action_type: UserAction::WAS_LIKED) }
+        6.times { UserAction.create!(user_id: user_3.id, action_type: UserAction::WAS_LIKED) }
+      end
+
+      it "with category filtering" do
+        report = Report.find('top_users_by_likes_received')
+
+        expect(report.data.length).to eq(3)
+        expect(report.data[0][:username]).to eq("jake")
+        expect(report.data[1][:username]).to eq("john")
+        expect(report.data[2][:username]).to eq("jonah")
+      end
+    end
+  end
+
+  describe 'top_users_by_likes_received_from_a_variety_of_people' do
+    let(:report) { Report.find('top_users_by_likes_received_from_a_variety_of_people') }
+
+    include_examples 'no data'
+
+    context 'with data' do
+      before do
+        user_1 = Fabricate(:user, username: "jonah")
+        user_2 = Fabricate(:user, username: "jake")
+        user_3 = Fabricate(:user, username: "john")
+        user_4 = Fabricate(:user, username: "joseph")
+        user_5 = Fabricate(:user, username: "joanne")
+        user_6 = Fabricate(:user, username: "jerome")
+
+        topic_1 = Fabricate(:topic, user: user_1)
+        topic_2 = Fabricate(:topic, user: user_2)
+        topic_3 = Fabricate(:topic, user: user_3)
+
+        post_1 = Fabricate(:post, topic: topic_1, user: user_1)
+        post_2 = Fabricate(:post, topic: topic_2, user: user_2)
+        post_3 = Fabricate(:post, topic: topic_3, user: user_3)
+
+        3.times { UserAction.create!(user_id: user_4.id, target_post_id: post_1.id, action_type: UserAction::LIKE) }
+        6.times { UserAction.create!(user_id: user_5.id, target_post_id: post_2.id, action_type: UserAction::LIKE) }
+        9.times { UserAction.create!(user_id: user_6.id, target_post_id: post_3.id, action_type: UserAction::LIKE) }
+
+      end
+
+      it "with category filtering" do
+        report = Report.find('top_users_by_likes_received_from_a_variety_of_people')
+
+        expect(report.data.length).to eq(3)
+        expect(report.data[0][:username]).to eq("jonah")
+        expect(report.data[1][:username]).to eq("jake")
+        expect(report.data[2][:username]).to eq("john")
+      end
+    end
+  end
+
+  describe 'top_users_by_likes_received_from_inferior_trust_level' do
+    let(:report) { Report.find('top_users_by_likes_received_from_inferior_trust_level') }
+
+    include_examples 'no data'
+
+    context 'with data' do
+      before do
+        user_1 = Fabricate(:user, username: "jonah", trust_level: 2)
+        user_2 = Fabricate(:user, username: "jake", trust_level: 2)
+        user_3 = Fabricate(:user, username: "john", trust_level: 2)
+        user_4 = Fabricate(:user, username: "joseph", trust_level: 1)
+        user_5 = Fabricate(:user, username: "joanne", trust_level: 1)
+        user_6 = Fabricate(:user, username: "jerome", trust_level: 2)
+
+        topic_1 = Fabricate(:topic, user: user_1)
+        topic_2 = Fabricate(:topic, user: user_2)
+        topic_3 = Fabricate(:topic, user: user_3)
+
+        post_1 = Fabricate(:post, topic: topic_1, user: user_1)
+        post_2 = Fabricate(:post, topic: topic_2, user: user_2)
+        post_3 = Fabricate(:post, topic: topic_3, user: user_3)
+
+        3.times { UserAction.create!(user_id: user_4.id, target_post_id: post_1.id, action_type: UserAction::LIKE) }
+        6.times { UserAction.create!(user_id: user_5.id, target_post_id: post_2.id, action_type: UserAction::LIKE) }
+        9.times { UserAction.create!(user_id: user_6.id, target_post_id: post_3.id, action_type: UserAction::LIKE) }
+
+      end
+
+      it "with category filtering" do
+        report = Report.find('top_users_by_likes_received_from_inferior_trust_level')
+
+        expect(report.data.length).to eq(2)
+        expect(report.data[0][:username]).to eq("jake")
+        expect(report.data[1][:username]).to eq("jonah")
       end
     end
   end

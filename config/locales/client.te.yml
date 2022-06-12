@@ -98,7 +98,6 @@ te:
       next_month: "తరువాత నెల"
       placeholder: తేదీ
     share:
-      post: "#%{postNumber} టపా"
       close: "మూసివేయి"
     emails_are_disabled: "బయటకు వెళ్లే అన్ని ఈమెయిల్లూ అధికారి నిశేధించాడు. ఇప్పుడు ఎటువంటి ఈమెయిల్ ప్రకటనలూ పంపవీలవదు."
     themes:
@@ -184,7 +183,7 @@ te:
     revert: "తిద్దు"
     failed: "విఫలం"
     banner:
-      close: "బ్యానరు తుడువు"
+      edit: "సవరించు"
     choose_topic:
       none_found: "ఎటువంటి విషయాలూ కనపడలేదు."
     review:
@@ -230,6 +229,7 @@ te:
     time_shortcut:
       tomorrow: "రేపు"
       this_weekend: "ఈ వారాంతం"
+      next_week: "వచ్చే వారం"
       next_month: "వచ్చే నెల"
     user_action:
       user_posted_topic: "<a href='%{topicUrl}'>విషయాన్ని</a> <a href='%{userUrl}'>%{user}</a> రాసారు "
@@ -609,6 +609,8 @@ te:
         posted_by: "టపా రాసినవారు"
         sent_by: "పంపినవారు"
         the_topic: "విషయం"
+    user_status:
+      save: "భద్రపరచు"
     loading: "లోడవుతోంది..."
     errors:
       prev_page: "ఎక్కించుట ప్రయత్నిస్తున్నప్పుడు"
@@ -695,20 +697,13 @@ te:
       sent_activation_email_again: "మీకు <b>%{currentEmail}</b> మరో చేతన ఈమెయిల్ పంపాము. అది చేరుకోడానికి కొద్ది నిమిషాలు పట్టవచ్చు. ఇంకా స్పామ్ ఫోల్డరు చూడటం మర్చిపోకండి సుమా. "
       google_oauth2:
         name: "గూగుల్"
-        title: "గూగుల్ తో"
       twitter:
         name: "ట్విట్టర్"
-        title: "ట్విట్టరు తో"
-      facebook:
-        title: "ఫేస్ బుక్ తో"
-      github:
-        title: "గిట్ హబ్ తో"
     invites:
       accept_title: "ఆహ్వానం"
       welcome_to: "%{site_name} కు సుస్వాగతం!"
       name_label: "పేరు"
       password_label: "సంకేతపదం"
-      optional_description: "(ఐచ్ఛికం)"
     password_reset:
       continue: "%{site_name} కు కొనసాగండి"
     emoji_set:
@@ -809,7 +804,7 @@ te:
     current_user: "మీ సభ్యపుటకు వెళ్లు"
     topics:
       bulk:
-        reset_read: "రీలోడ్ రీసెట్"
+        defer: "వాయిదావేయి"
         delete: "విషయాలు తొలగించు"
         dismiss_new: "కొత్తవి తుడువు"
         toggle: "విషయాల బహుళ ఎంపికలు అటుఇటుచేయి"
@@ -884,11 +879,6 @@ te:
       slow_mode_update:
         enable: "చేతనం"
         remove: "అచేతనం"
-      auto_update_input:
-        tomorrow: "రేపు"
-        this_weekend: "ఈ వారాంతం"
-        next_week: "వచ్చే వారం"
-        next_month: "వచ్చే నెల"
       auto_close:
         error: "దయచేసి చెల్లే విలువ రాయండి"
         based_on_last_post: "ఈ విషయంలో చివరి టపా కనీసం ఇంత వయసు వచ్చేంతవరకూ విషయాన్ని మూయకు."
@@ -901,13 +891,7 @@ te:
         replies_short: "%{current} / %{total}"
       progress:
         title: విషయపు పురోగతి
-        go_top: "అగ్ర"
-        go_bottom: "అడుగు"
-        go: "వెళ్లు"
-        jump_bottom_with_number: "%{post_number} టపాకు వళ్లు"
         jump_prompt_or: "లేదా"
-        total: అన్ని టపాలు
-        current: ప్రస్తుత టపా
       notifications:
         reasons:
           "3_6": "మీకు ప్రకటనలు వస్తాయి, ఎందుకంటే మీరు ఈ వర్గాంపై కన్నేసారు"
@@ -940,8 +924,6 @@ te:
         close: "విషయం మూయు"
         unarchive: "విషయాన్ని కట్టవిప్పు"
         archive: "విషయాన్ని కట్టకట్టు"
-        invisible: "అజ్జాబితాగా గుర్తించు"
-        visible: "జాబితాగా గుర్తించు"
         reset_read: "చదివిన గణాంకాలను రీసెట్ చేయి"
       feature:
         pin: "విషయం గుచ్చు"
@@ -952,7 +934,6 @@ te:
         title: "జవాబు"
         help: "ఈ విషయానికి జవాబివ్వుట ప్రారంభించు"
       share:
-        title: "పంచు"
         help: "ఈ విషయపులంకెను పంచు"
         invite_users: "ఆహ్వానించు"
       flag_topic:
@@ -1090,6 +1071,8 @@ te:
       general: "సాధారణ"
       settings: "అమరికలు"
       tags: "ట్యాగులు"
+      required_tag_group:
+        delete: "తొలగించు"
       delete: "వర్గం తొలగించు"
       create: "కొత్త వర్గం"
       save: "వర్గం దాచు"
@@ -1198,6 +1181,8 @@ te:
       unlisted:
         help: "ఈ విషయం జాబితాలనుండి తొలగించబడింది. ఇహ కేవలం నేరు లంకె ద్వారా మాత్రమే చూడగలరు."
     posts: "టపాలు"
+    pending_posts:
+      label: "పెండింగు"
     original_post: "మూల టపా"
     views: "చూపులు"
     replies: "జవాబులు"
@@ -1323,6 +1308,7 @@ te:
     tagging:
       tags: "ట్యాగులు"
       add_synonyms: "కలుపు"
+      description: "వివరణ"
       sort_by_name: "పేరు"
       cancel_delete_unused: "రద్దుచేయి"
       filters:
@@ -1362,6 +1348,20 @@ te:
         member: "మెంబరు"
         regular: "రెగ్యులర్"
         leader: "లీడర్"
+    sidebar:
+      unread_count: "%{count} చదవనవి"
+      new_count: "%{count} కొత్త"
+      sections:
+        categories:
+          header_link_title: "అన్ని వర్గాలు"
+          header_link_text: "వర్గాలు"
+        topics:
+          header_link_text: "విషయాలు"
+          links:
+            tracked:
+              content: "గమనించారు"
+            my_posts:
+              content: "నా టపాలు"
   admin_js:
     type_to_filter: "జల్లించుటకు రాయి..."
     admin:
@@ -1537,7 +1537,6 @@ te:
         delete: "తొలగించు"
         color: "రంగు"
         opacity: "అపారదర్శకత"
-        copy: "నకలు"
         email_templates:
           title: "ఈమెయిల్"
           subject: "సబ్జెక్టు"
@@ -1702,8 +1701,6 @@ te:
         screened_ips:
           title: "స్క్రీన్ చేసిన ఐపీలు"
           delete_confirm: "మీరు నిజంగా %{ip_address} కు ఈ నియమాన్ని తొలగించాలనుకుంటున్నారా? "
-          rolled_up_some_subnets: "IP నిషేధిత ప్రవేశాలు ఈ సబ్‌నెట్స్‌కు విజయవంతంగా చేర్చారు: %{subnets}."
-          rolled_up_no_subnet: "రోల్ అప్ చేయుటకు ఏమీ లేదు."
           actions:
             block: "ఖండం"
             do_nothing: "అనుమతించు"

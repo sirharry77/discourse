@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe ScreenedUrl do
 
   let(:url)    { 'http://shopppping.com/bad/drugz' }
@@ -112,7 +110,7 @@ describe ScreenedUrl do
         expect(record.action_type).to eq(described_class.actions[:do_nothing])
       end
 
-      it 'lets action_type be overriden' do
+      it 'lets action_type be overridden' do
         record = described_class.watch(url, domain, action_type: described_class.actions[:block])
         expect(record).not_to be_new_record
         expect(record.action_type).to eq(described_class.actions[:block])

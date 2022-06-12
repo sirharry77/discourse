@@ -1,8 +1,45 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
+RSpec.describe UserProfile do
+  describe "Validations" do
+    subject(:profile) { user.user_profile }
 
-describe UserProfile do
+    fab!(:user) { Fabricate(:user) }
+    fab!(:watched_word) { Fabricate(:watched_word, word: "bad") }
+
+    describe "#location" do
+      context "when it contains watched words" do
+        before { profile.location = "bad location" }
+
+        it "is not valid" do
+          profile.valid?
+          expect(profile.errors[:base].size).to eq(1)
+          expect(profile.errors.messages[:base]).to include(/you can't post the word/)
+        end
+      end
+
+      context "when it does not contain watched words" do
+        it { is_expected.to be_valid }
+      end
+    end
+
+    describe "#bio_raw" do
+      context "when it contains watched words" do
+        before { profile.bio_raw = "bad bio" }
+
+        it "is not valid" do
+          profile.valid?
+          expect(profile.errors[:base].size).to eq(1)
+          expect(profile.errors.messages[:base]).to include(/you can't post the word/)
+        end
+      end
+
+      context "when it does not contain watched words" do
+        it { is_expected.to be_valid }
+      end
+    end
+  end
+
   it 'is created automatically when a user is created' do
     user = Fabricate(:evil_trout)
     expect(user.user_profile).to be_present
@@ -111,7 +148,7 @@ describe UserProfile do
     end
 
     it 'supports emoji images' do
-      expect(user.user_profile.bio_excerpt(500, keep_emoji_images: true)).to eq("hello <img src=\"#{upload.url}?v=#{Emoji::EMOJI_VERSION}\" title=\":test:\" class=\"emoji emoji-custom\" alt=\":test:\"> <img src=\"/images/emoji/twitter/woman_scientist/5.png?v=#{Emoji::EMOJI_VERSION}\" title=\":woman_scientist:t5:\" class=\"emoji\" alt=\":woman_scientist:t5:\"> <img src=\"/images/emoji/twitter/thinking.png?v=#{Emoji::EMOJI_VERSION}\" title=\":thinking:\" class=\"emoji\" alt=\":thinking:\">")
+      expect(user.user_profile.bio_excerpt(500, keep_emoji_images: true)).to eq("hello <img src=\"#{upload.url}?v=#{Emoji::EMOJI_VERSION}\" title=\":test:\" class=\"emoji emoji-custom\" alt=\":test:\" loading=\"lazy\" width=\"20\" height=\"20\"> <img src=\"/images/emoji/twitter/woman_scientist/5.png?v=#{Emoji::EMOJI_VERSION}\" title=\":woman_scientist:t5:\" class=\"emoji\" alt=\":woman_scientist:t5:\" loading=\"lazy\" width=\"20\" height=\"20\"> <img src=\"/images/emoji/twitter/thinking.png?v=#{Emoji::EMOJI_VERSION}\" title=\":thinking:\" class=\"emoji\" alt=\":thinking:\" loading=\"lazy\" width=\"20\" height=\"20\">")
     end
   end
 
@@ -226,7 +263,5 @@ describe UserProfile do
         expect(user.card_background_upload).to eq(nil)
       end
     end
-
   end
-
 end

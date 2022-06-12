@@ -21,6 +21,7 @@ class Group < ActiveRecord::Base
   has_many :group_users, dependent: :destroy
   has_many :group_requests, dependent: :destroy
   has_many :group_mentions, dependent: :destroy
+  has_many :group_associated_groups, dependent: :destroy
 
   has_many :group_archived_messages, dependent: :destroy
 
@@ -32,8 +33,11 @@ class Group < ActiveRecord::Base
   has_many :reviewables, foreign_key: :reviewable_by_group_id, dependent: :nullify
   has_many :group_category_notification_defaults, dependent: :destroy
   has_many :group_tag_notification_defaults, dependent: :destroy
+  has_many :associated_groups, through: :group_associated_groups, dependent: :destroy
 
   belongs_to :flair_upload, class_name: 'Upload'
+  has_many :upload_references, as: :target, dependent: :destroy
+
   belongs_to :smtp_updated_by, class_name: 'User'
   belongs_to :imap_updated_by, class_name: 'User'
 
@@ -48,6 +52,12 @@ class Group < ActiveRecord::Base
 
   after_save :enqueue_update_mentions_job,
     if: Proc.new { |g| g.name_before_last_save && g.saved_change_to_name? }
+
+  after_save do
+    if saved_change_to_flair_upload_id?
+      UploadReference.ensure_exist!(upload_ids: [self.flair_upload_id], target: self)
+    end
+  end
 
   after_save :expire_cache
   after_destroy :expire_cache
@@ -108,7 +118,8 @@ class Group < ActiveRecord::Base
     "imap_port",
     "imap_ssl",
     "email_username",
-    "email_password"
+    "email_password",
+    "email_from_alias"
   ]
 
   ALIAS_LEVELS = {
@@ -136,9 +147,10 @@ class Group < ActiveRecord::Base
   validates :messageable_level, inclusion: { in: ALIAS_LEVELS.values }
 
   scope :with_imap_configured, -> { where(imap_enabled: true).where.not(imap_mailbox_name: '') }
+  scope :with_smtp_configured, -> { where(smtp_enabled: true) }
 
   scope :visible_groups, Proc.new { |user, order, opts|
-    groups = self.order(order || "name ASC")
+    groups = self.order(order || "groups.name ASC")
 
     if !opts || !opts[:include_everyone]
       groups = groups.where("groups.id > 0")
@@ -285,6 +297,10 @@ class Group < ActiveRecord::Base
     else
       [ALIAS_LEVELS[:everyone]]
     end
+  end
+
+  def smtp_from_address
+    self.email_from_alias.present? ? self.email_from_alias : self.email_username
   end
 
   def downcase_incoming_email
@@ -552,12 +568,24 @@ class Group < ActiveRecord::Base
     lookup_group(name) || refresh_automatic_group!(name)
   end
 
-  def self.search_groups(name, groups: nil, custom_scope: {})
+  def self.search_groups(name, groups: nil, custom_scope: {}, sort: :none)
     groups ||= Group
 
-    groups.where(
+    relation = groups.where(
       "name ILIKE :term_like OR full_name ILIKE :term_like", term_like: "%#{name}%"
     )
+
+    if sort == :auto
+      prefix = "#{name.gsub("_", "\\_")}%"
+      relation = relation.reorder(
+        DB.sql_fragment(
+          "CASE WHEN name ILIKE :like OR full_name ILIKE :like THEN 0 ELSE 1 END ASC, name ASC",
+          like: prefix
+        )
+      )
+    end
+
+    relation
   end
 
   def self.lookup_group(name)
@@ -705,7 +733,9 @@ class Group < ActiveRecord::Base
 
   def self.find_by_email(email)
     self.where(
-      "email_username = :email OR string_to_array(incoming_email, '|') @> ARRAY[:email]",
+      "email_username = :email OR
+        string_to_array(incoming_email, '|') @> ARRAY[:email] OR
+        email_from_alias = :email",
       email: Email.downcase(email)
     ).first
   end
@@ -766,6 +796,20 @@ class Group < ActiveRecord::Base
     end
 
     self
+  end
+
+  def add_automatically(user, subject: nil)
+    if users.exclude?(user) && add(user)
+      logger = GroupActionLogger.new(Discourse.system_user, self)
+      logger.log_add_user_to_group(user, subject)
+    end
+  end
+
+  def remove_automatically(user, subject: nil)
+    if users.include?(user) && remove(user)
+      logger = GroupActionLogger.new(Discourse.system_user, self)
+      logger.log_remove_user_from_group(user, subject)
+    end
   end
 
   def staff?
@@ -898,6 +942,10 @@ class Group < ActiveRecord::Base
   def message_count
     return 0 unless self.has_messages
     TopicAllowedGroup.where(group_id: self.id).joins(:topic).count
+  end
+
+  def full_url
+    "#{Discourse.base_url}/g/#{UrlHelper.encode_component(self.name)}"
   end
 
   protected
@@ -1111,6 +1159,7 @@ end
 #  imap_enabled                       :boolean          default(FALSE)
 #  imap_updated_at                    :datetime
 #  imap_updated_by_id                 :integer
+#  email_from_alias                   :string
 #
 # Indexes
 #

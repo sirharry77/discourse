@@ -133,13 +133,26 @@ export function applyDefaultHandlers(pretender) {
 
   pretender.delete("/bookmarks/:id", () => response({}));
 
-  pretender.get("/tags/filter/search", () => {
-    return response({
+  pretender.get("/tags/filter/search", (request) => {
+    const responseBody = {
       results: [
-        { text: "monkey", count: 1 },
-        { text: "gazelle", count: 2 },
+        { id: "monkey", name: "monkey", count: 1 },
+        { id: "gazelle", name: "gazelle", count: 2 },
       ],
-    });
+    };
+
+    if (
+      request.queryParams.categoryId === "1" &&
+      request.queryParams.q === "" &&
+      !request.queryParams.selected_tags.includes("monkey")
+    ) {
+      responseBody["required_tag_group"] = {
+        name: "monkey group",
+        min_count: 1,
+      };
+    }
+
+    return response(responseBody);
   });
 
   pretender.get(`/u/:username/emails.json`, (request) => {
@@ -254,10 +267,17 @@ export function applyDefaultHandlers(pretender) {
   pretender.get("/search", (request) => {
     if (request.queryParams.q === "discourse") {
       return response(fixturesByUrl["/search.json"]);
-    } else if (request.queryParams.q === "discourse in:personal") {
-      const fixtures = fixturesByUrl["/search.json"];
-      fixtures.topics.firstObject.archetype = "private_message";
-      return response(fixtures);
+    } else if (request.queryParams.q === "discourse visited") {
+      const obj = JSON.parse(JSON.stringify(fixturesByUrl["/search.json"]));
+      obj.topics.firstObject.visited = true;
+      return response(obj);
+    } else if (
+      request.queryParams.q === "discourse in:personal" ||
+      request.queryParams.q === "discourse in:messages"
+    ) {
+      const obj = JSON.parse(JSON.stringify(fixturesByUrl["/search.json"]));
+      obj.topics.firstObject.archetype = "private_message";
+      return response(obj);
     } else {
       return response({});
     }
@@ -287,7 +307,7 @@ export function applyDefaultHandlers(pretender) {
 
   pretender.get("/t/id_for/:slug", () => {
     return response({
-      id: 280,
+      topic_id: 280,
       slug: "internationalization-localization",
       url: "/t/internationalization-localization/280",
     });
@@ -323,7 +343,7 @@ export function applyDefaultHandlers(pretender) {
   });
 
   pretender.get("/posts/:id/replies", () => {
-    return response([{ id: 1234, cooked: "wat" }]);
+    return response([{ id: 1234, cooked: "wat", username: "somebody" }]);
   });
 
   // TODO: Remove this old path when no longer using old ember
@@ -352,7 +372,7 @@ export function applyDefaultHandlers(pretender) {
   );
 
   pretender.put("/categories/:category_id", (request) => {
-    const category = parsePostData(request.requestBody);
+    const category = JSON.parse(request.requestBody);
     category.id = parseInt(request.params.category_id, 10);
 
     if (category.email_in === "duplicate@example.com") {
@@ -1117,6 +1137,12 @@ export function applyDefaultHandlers(pretender) {
       ],
     });
   });
+
+  pretender.get("/tag_groups/filter/search", () =>
+    response(fixturesByUrl["/tag_groups/filter/search"])
+  );
+
+  pretender.get("/c/:id/visible_groups.json", () => response({ groups: [] }));
 }
 
 export function resetPretender() {

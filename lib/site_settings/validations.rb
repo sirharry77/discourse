@@ -3,6 +3,28 @@
 module SiteSettings; end
 
 module SiteSettings::Validations
+  PROHIBITED_USER_AGENT_STRINGS = %w[
+    apple
+    windows
+    linux
+    ubuntu
+    gecko
+    firefox
+    chrome
+    safari
+    applewebkit
+    webkit
+    mozilla
+    macintosh
+    khtml
+    intel
+    osx
+    os\ x
+    iphone
+    ipad
+    mac
+  ]
+
   def validate_error(key, opts = {})
     raise Discourse::InvalidParameters.new(I18n.t("errors.site_settings.#{key}", opts))
   end
@@ -177,7 +199,7 @@ module SiteSettings::Validations
   end
 
   def validate_enforce_second_factor(new_val)
-    if SiteSetting.enable_discourse_connect?
+    if new_val != "no" && SiteSetting.enable_discourse_connect?
       return validate_error :second_factor_cannot_be_enforced_with_discourse_connect_enabled
     end
     if new_val == "all" && Discourse.enabled_auth_providers.count > 0
@@ -199,6 +221,34 @@ module SiteSettings::Validations
     return if new_val.blank?
     return unless new_val.split('|').any?(/\/$/)
     validate_error :cors_origins_should_not_have_trailing_slash
+  end
+
+  def validate_slow_down_crawler_user_agents(new_val)
+    return if new_val.blank?
+
+    new_val.downcase.split("|").each do |crawler|
+      if crawler.size < 3
+        validate_error(:slow_down_crawler_user_agent_must_be_at_least_3_characters)
+      end
+      if PROHIBITED_USER_AGENT_STRINGS.any? { |c| c.include?(crawler) }
+        validate_error(
+          :slow_down_crawler_user_agent_cannot_be_popular_browsers,
+          values: PROHIBITED_USER_AGENT_STRINGS.join(I18n.t("word_connector.comma"))
+        )
+      end
+    end
+  end
+
+  def validate_strip_image_metadata(new_val)
+    return if new_val == "t"
+    return if SiteSetting.composer_media_optimization_image_enabled == false
+    validate_error :strip_image_metadata_cannot_be_disabled_if_composer_media_optimization_image_enabled
+  end
+
+  def validate_twitter_summary_large_image(new_val)
+    return if new_val.blank?
+    return if !Upload.exists?(id: new_val, extension: "svg")
+    validate_error :twitter_summary_large_image_no_svg
   end
 
   private

@@ -7,6 +7,15 @@ class ReviewableQueuedPost < Reviewable
     DiscourseEvent.trigger(:queued_post_created, self)
   end
 
+  after_save do
+    if saved_change_to_payload? && self.status == Reviewable.statuses[:pending] && self.payload&.[]('raw').present?
+      upload_ids = Upload.extract_upload_ids(self.payload['raw'])
+      UploadReference.ensure_exist!(upload_ids: upload_ids, target: self)
+    end
+  end
+
+  after_commit :compute_user_stats, only: %i[create update]
+
   def build_actions(actions, guardian, args)
 
     unless approved?
@@ -156,6 +165,16 @@ class ReviewableQueuedPost < Reviewable
       block_urls: true,
       delete_as_spammer: true
     }
+  end
+
+  def compute_user_stats
+    return unless status_changed_from_or_to_pending?
+    created_by.user_stat.update_pending_posts
+  end
+
+  def status_changed_from_or_to_pending?
+    saved_change_to_id?(from: nil) && pending? ||
+      saved_change_to_status?(from: self.class.statuses[:pending])
   end
 end
 

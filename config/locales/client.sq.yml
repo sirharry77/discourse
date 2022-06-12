@@ -109,7 +109,6 @@ sq:
       previous_month: "Muaji i kaluar"
       next_month: "Muaji i ardhshëm"
     share:
-      post: "postim #%{postNumber}"
       close: "mbylle"
     action_codes:
       public_topic: "e bëri këtë temë publike %{when}"
@@ -227,8 +226,6 @@ sq:
       not_bookmarked: "shto postimin tek të preferuarat"
       remove: "Hiqeni nga të prefereruarat"
       save: "Ruaj"
-      auto_delete_preference:
-        never: "Asnjëherë"
       search: "Kërko"
     drafts:
       remove: "Hiq"
@@ -248,8 +245,8 @@ sq:
     switch_to_anon: "Filloni sesionin anonim"
     switch_from_anon: "Shkëputu nga sesioni anonim"
     banner:
-      close: "Hiq këtë banderolë."
-      edit: "Modifiko këtë banderolë >>"
+      close: "Hiq këtë banderolë"
+      edit: "Redakto"
     choose_topic:
       none_found: "Asnjë temë nuk u gjet."
     review:
@@ -738,10 +735,8 @@ sq:
         daily: "çdo ditë"
         weekly: "çdo javë"
       email_level:
-        title: "Më dërgo një email kur dikush më citon, i përgjigjet një postimi tim, më përmend me @username, ose më fton në një temë"
         always: "gjithmonë"
         never: "asnjëherë"
-      email_messages_level: "Më dërgo një email kur dikush më dërgon një mesazh"
       include_tl0_in_digests: "Përfshini dhe postime nga anëtarët e rinj"
       email_in_reply_to: "Përfshi një copëz të përgjigjeve ndaj postimit në email"
       other_settings: "Tjetër"
@@ -866,6 +861,8 @@ sq:
         sent_by: "Dërguar nga"
         private_message: "mesazhi"
         the_topic: "tema"
+    user_status:
+      save: "Ruaj"
     loading: "Duke ngarkuar..."
     errors:
       prev_page: "duke u munduar të ngarkohet"
@@ -973,16 +970,8 @@ sq:
       not_approved: "Llogaria juaj nuk është aprovuar ende. Do t'ju dërgojmë një email kur të aprovohet. "
       google_oauth2:
         name: "Google"
-        title: "me Google"
       twitter:
         name: "Twitter"
-        title: "me Twitter"
-      instagram:
-        title: "me Instagram"
-      facebook:
-        title: "me Facebook"
-      github:
-        title: "me GitHub"
     invites:
       accept_title: "Ftesë"
       welcome_to: "Mirë se vini tek %{site_name}!"
@@ -1033,8 +1022,6 @@ sq:
       group_mentioned:
         one: "By mentioning %{group}, you are about to notify <a href='%{group_link}'>%{count} person</a> – are you sure?"
         other: "By mentioning %{group}, you are about to notify <a href='%{group_link}'>%{count} people</a> – are you sure?"
-      cannot_see_mention:
-        private: "Ju përmendët %{username} , por ky anëtar nuk do të njoftohet sepse nuk kanë akses në këtë mesazh privat. Do t'ju duhet t'a ftoni anëtarin në këtë mesazh. "
       error:
         title_missing: "Titulli është i nevojshëm"
         category_missing: "Duhet të zgjidhni një kategori"
@@ -1157,7 +1144,7 @@ sq:
         select_all: "Zgjidh të gjitha"
         clear_all: "Pastro kriteret"
         unlist_topics: "Hiq temat nga lista"
-        reset_read: "Rivendos leximet"
+        defer: "Shty"
         delete: "Fshi temat"
         dismiss: "Hiqe"
         dismiss_read: "Hiq të gjitha temat e palexuara"
@@ -1265,14 +1252,7 @@ sq:
         replies_short: "%{current} / %{total}"
       progress:
         title: progresi i temës
-        go_top: "sipër"
-        go_bottom: "poshtë"
-        go: "shko"
-        jump_bottom: "hidhu tek përgjigja e fundit"
-        jump_bottom_with_number: "shko tek përgjigja %{post_number}"
         jump_prompt_or: "ose"
-        total: totali i postimeve
-        current: postimi aktual
       notifications:
         title: ndryshoni sa shpesh njoftoheni mbi këtë temë
         reasons:
@@ -1326,8 +1306,6 @@ sq:
         unpin: "Çngjite temën..."
         unarchive: "Çarkivoje temën"
         archive: "Arkivoje temën"
-        invisible: "Hiqeni nga Listat"
-        visible: "Listojeni"
         reset_read: "Reset Read Data"
       feature:
         pin: "Ngjite temën"
@@ -1338,7 +1316,6 @@ sq:
         title: "Përgjigju"
         help: "fillo shkrimin e një përgjigjeje në këtë temë"
       share:
-        title: "Shpërndaje"
         help: "shpërndani një lidhje mbi temën"
         invite_users: "Fto"
       flag_topic:
@@ -1555,6 +1532,8 @@ sq:
       tags: "Etiketat"
       tags_placeholder: "(Opsionale) lista e etiketave të lejuara"
       tag_groups_placeholder: "(Opsionale) lista e grupeve të etiketave"
+      required_tag_group:
+        delete: "Fshij"
       delete: "Fshini kategorinë"
       create: "Krijo kategorinë e re"
       create_long: "Krijo një kategori të re"
@@ -1698,6 +1677,9 @@ sq:
       unlisted:
         help: "Kjo temë nuk është e listuar, pra nuk do të paraqitet nue listat e temave të faqes dhe mund të shikohet vetëm me lidhje direkte"
     posts: "Postime"
+    pending_posts:
+      label: "Në pritje"
+      label_with_count: "Në pritje (%{count})"
     original_post: "Postimi Origjinal"
     views: "Shikimet"
     views_lowercase:
@@ -1884,8 +1866,7 @@ sq:
       tags: "Etiketat"
       add_synonyms: "Shto"
       delete_tag: "Fshi etiketën"
-      rename_tag: "Riemëro etiketën"
-      rename_instructions: "Zgjidhni një emër të ri për këtë etiketë"
+      description: "Përshkrimi"
       sort_by: "Rendit sipas:"
       sort_by_count: "numri"
       sort_by_name: "emër"
@@ -1946,6 +1927,21 @@ sq:
         member: "anëtarë"
         regular: "i zakonshëm"
         leader: "udhëheqës"
+    sidebar:
+      unread_count: "%{count} e palexuar"
+      new_count: "%{count} e re"
+      sections:
+        categories:
+          header_link_title: "kategoritë"
+          header_link_text: "Categories"
+        topics:
+          header_link_title: "kryefaqja"
+          header_link_text: "Tema"
+          links:
+            tracked:
+              content: "Gjurmuar"
+            my_posts:
+              content: "Postimet e mia"
   admin_js:
     type_to_filter: "shkruaj për kërkim"
     admin:
@@ -2150,7 +2146,6 @@ sq:
         delete: "Fshij"
         color: "Ngjyra"
         opacity: "Opaciteti"
-        copy: "Kopjo"
         email_templates:
           title: "Email"
           subject: "Subjekti"
@@ -2358,9 +2353,6 @@ sq:
         screened_ips:
           title: "Kontroll IP-sh"
           delete_confirm: "Are you sure you want to remove the rule for %{ip_address}?"
-          roll_up_confirm: "Are you sure you want to roll up commonly screened IP addresses into subnets?"
-          rolled_up_some_subnets: "Successfully rolled up IP ban entries to these subnets: %{subnets}."
-          rolled_up_no_subnet: "There was nothing to roll up."
           actions:
             block: "Blloko"
             do_nothing: "Lejo"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # If Mini Profiler is included via gem
-if Rails.configuration.respond_to?(:load_mini_profiler) && Rails.configuration.load_mini_profiler
+if Rails.configuration.respond_to?(:load_mini_profiler) && Rails.configuration.load_mini_profiler && RUBY_ENGINE == "ruby"
   require 'rack-mini-profiler'
   require 'stackprof'
 
@@ -67,6 +67,10 @@ if defined?(Rack::MiniProfiler) && defined?(Rack::MiniProfiler::Config)
     # some security, lets not have these tokens floating about
     Digest::MD5.hexdigest(id)
   end
+
+  # Cookie path should be set to the base path so Discourse's session cookie path
+  #  does not get clobbered.
+  Rack::MiniProfiler.config.cookie_path = Discourse.base_path.presence || "/"
 
   Rack::MiniProfiler.config.position = 'left'
   Rack::MiniProfiler.config.backtrace_ignores ||= []

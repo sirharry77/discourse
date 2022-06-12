@@ -34,6 +34,8 @@ class UserOptionSerializer < ApplicationSerializer
              :timezone,
              :skip_new_user_tips,
              :default_calendar,
+             :oldest_search_log_date,
+             :enable_experimental_sidebar
 
   def auto_track_topics_after_msecs
     object.auto_track_topics_after_msecs || SiteSetting.default_other_auto_track_topics_after_msecs
@@ -49,6 +51,10 @@ class UserOptionSerializer < ApplicationSerializer
 
   def theme_ids
     object.theme_ids.presence || [SiteSetting.default_theme_id]
+  end
+
+  def include_enable_experimental_sidebar?
+    SiteSetting.enable_experimental_sidebar
   end
 
 end

@@ -197,16 +197,6 @@
     }
   }
 
-  &.facebook {
-    .d-icon {
-      color: $facebook;
-    }
-    &:hover {
-      .d-icon {
-        color: $facebook;
-      }
-    }
-  }
   &.cas {
     .d-icon {
       color: var(--cas);
@@ -277,6 +267,8 @@
     color: var(--primary-low-mid);
   }
   @include hover {
+    background: transparent;
+    color: var(--primary);
     .d-icon {
       color: var(--primary);
     }

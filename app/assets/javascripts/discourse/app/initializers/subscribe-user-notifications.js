@@ -108,8 +108,17 @@ export default {
         user.notification_channel_position
       );
 
+      bus.subscribe(`/user-drafts/${user.id}`, (data) => {
+        user.updateDraftProperties(data);
+      });
+
       bus.subscribe(`/do-not-disturb/${user.get("id")}`, (data) => {
         user.updateDoNotDisturbStatus(data.ends_at);
+      });
+
+      bus.subscribe(`/user-status/${user.id}`, (data) => {
+        user.set("status", data);
+        appEvents.trigger("user-status:changed");
       });
 
       const site = container.lookup("site:main");
@@ -117,7 +126,22 @@ export default {
       const router = container.lookup("router:main");
 
       bus.subscribe("/categories", (data) => {
-        (data.categories || []).forEach((c) => site.updateCategory(c));
+        (data.categories || []).forEach((c) => {
+          const mutedCategoryIds = user.muted_category_ids?.concat(
+            user.indirectly_muted_category_ids
+          );
+          if (
+            mutedCategoryIds &&
+            mutedCategoryIds.includes(c.parent_category_id) &&
+            !mutedCategoryIds.includes(c.id)
+          ) {
+            user.set(
+              "indirectly_muted_category_ids",
+              user.indirectly_muted_category_ids.concat(c.id)
+            );
+          }
+          return site.updateCategory(c);
+        });
         (data.deleted_categories || []).forEach((id) =>
           site.removeCategory(id)
         );
@@ -133,9 +157,9 @@ export default {
         );
         initDesktopNotifications(bus, appEvents);
 
-        if (isPushNotificationsEnabled(user, site.mobileView)) {
+        if (isPushNotificationsEnabled(user)) {
           disableDesktopNotifications();
-          registerPushNotifications(user, site.mobileView, router, appEvents);
+          registerPushNotifications(user, router, appEvents);
         } else {
           unsubscribePushNotifications(user);
         }

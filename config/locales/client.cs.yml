@@ -157,7 +157,6 @@ cs:
       to_placeholder: "do data"
     share:
       topic_html: 'Téma: <span class="topic-title">%{topicTitle}</span>'
-      post: "příspěvek #%{postNumber}"
       close: "zavřít"
       twitter: "Sdílet na Twitteru"
       facebook: "Sdílet na Facebooku"
@@ -208,7 +207,6 @@ cs:
     bootstrap_mode_disabled: "Režim bootstrap bude deaktivován v následujících 24 hodinách."
     themes:
       default_description: "Výchozí"
-      broken_theme_alert: "Vaše stránka nemusí fungovat, protože šablona / komponenta %{theme} má chyby. Vypněte ji na %{path}."
     s3:
       regions:
         ap_northeast_1: "Asia Pacific (Tokyo)"
@@ -325,11 +323,6 @@ cs:
       invalid_custom_datetime: "Zadané datum a čas jsou neplatné, zkuste to prosím znovu."
       list_permission_denied: "Nemáte oprávnění k zobrazení záložek tohoto uživatele."
       no_user_bookmarks: "Nemáte žádné záložky; záložky vám umožňují rychle odkazovat na konkrétní příspěvky."
-      auto_delete_preference:
-        label: "Automaticky smazat"
-        never: "Nikdy"
-        when_reminder_sent: "Jakmile je připomenutí odesláno"
-        on_owner_reply: "Po odpovědi na toto téma"
       search_placeholder: "Hledat záložky podle názvu, názvu tématu nebo obsahu příspěvku"
       search: "Vyhledat"
       reminders:
@@ -394,8 +387,8 @@ cs:
     switch_to_anon: "Vstoupit do anonymního módu"
     switch_from_anon: "Opustit anonymní mód"
     banner:
-      close: "Odmítnout tento banner."
-      edit: "Editujte tento banner >>"
+      close: "Odmítnout tento banner"
+      edit: "Upravit"
     pwa:
       install_banner: "Chcete <a href>nainstalovat %{title} na toto zařízení?</a>"
     choose_topic:
@@ -517,8 +510,11 @@ cs:
       this_weekend: "Tento týden"
       start_of_next_business_week: "Pondělí"
       start_of_next_business_week_alt: "Příští pondělí"
+      next_week: "Další týden"
       next_month: "Další měsíc"
+      forever: "Navždy"
       custom: "Vlastní datum a čas"
+      select_timeframe: "Vyberte časové období"
     user_action:
       user_posted_topic: "<a href='%{userUrl}'>%{user}</a> zaslal <a href='%{topicUrl}'>téma</a>"
       you_posted_topic: "Zaslal jste <a href='%{topicUrl}'>téma</a>"
@@ -1162,10 +1158,8 @@ cs:
         every_month: "každý měsíc"
         every_six_months: "každých šest měsíců"
       email_level:
-        title: "Zašli mi email, pokud mě někde cituje, odpoví na můj příspěvek, zmíní mé @jméno nebo mě pozve do tématu."
         always: "vždy"
         never: "nikdy"
-      email_messages_level: "Zašli mi email, pokud mi někdo pošle zprávu."
       include_tl0_in_digests: "Zahrnout obsah nových uživatelů v souhrnných emailech"
       email_in_reply_to: "Zahrnout v emailech úryvek příspěvku, na který je reagováno"
       other_settings: "Ostatní"
@@ -1319,6 +1313,8 @@ cs:
         sent_by: "Odeslal"
         private_message: "zpráva"
         the_topic: "téma"
+    user_status:
+      save: "Uložit"
     loading: "Načítám..."
     errors:
       prev_page: "při nahrávání stránky"
@@ -1449,19 +1445,14 @@ cs:
       not_approved: "Váš účet zatím nebyl schválen. Až se tak stane, obdržíte oznámení emailem a budete se moci přihlásit."
       google_oauth2:
         name: "Google"
-        title: "přes Google"
       twitter:
         name: "Twitter"
-        title: "přes Twitter"
       instagram:
         name: "Instagram"
-        title: "s Instagramem"
       facebook:
         name: "Facebook"
-        title: "přes Facebook"
       github:
         name: "GitHub"
-        title: "přes GitHub"
       discord:
         name: "Discord"
     invites:
@@ -1474,7 +1465,6 @@ cs:
       success: "Váš účet byl vytvořen a nyní jste přihlášeni."
       name_label: "Jméno"
       password_label: "Heslo"
-      optional_description: "(volitelné)"
     password_reset:
       continue: "Pokračovat na %{site_name}"
     emoji_set:
@@ -1553,9 +1543,6 @@ cs:
         few: "Zmíněním %{group}, upozorníš <a href='%{group_link}'>%{count} lidi</a> – jste si jistý/á?"
         many: "Zmíněním %{group}, upozorníš <a href='%{group_link}'>%{count} lidí</a> – jste si jistý/á?"
         other: "Zmíněním %{group}, upozorníš <a href='%{group_link}'>%{count} lidí</a> – jste si jistý/á?"
-      cannot_see_mention:
-        category: "Zmínili jste uživatele %{username}, ale oznámení se mu nepošle, protože nemá přístup do této kategorie. Budete jej muset přidat do skupiny, která má přístup do této kategorie."
-        private: "Zmínili jste uživatele %{username}, ale oznámení se mu nepošle, protože tuto osobní zprávu nevidí. Musíte ho pozvat do této osobní konverzace."
       duplicate_link: "Zdá se, že odkaz na <b>%{domain}</b> už uvedl v tomto tématu <b>@ %{username}</b> v <a href='%{post_url}'>odpovědi %{ago}</a> - opravdu chcete odkaz poslat znovu?"
       error:
         title_missing: "Název musí být vyplněn"
@@ -1626,9 +1613,6 @@ cs:
         reply_as_new_topic:
           label: Odpovědět v propojeném tématu
           desc: Vytvořit nové téma propojené s tímto tématem
-        reply_as_private_message:
-          label: Nová zpráva
-          desc: Vytvořit novou osobní zprávu
         reply_to_topic:
           label: Odpovědět na téma
           desc: Odpovědět na téma, ale ne na konkrétní příspěvek
@@ -1800,7 +1784,7 @@ cs:
         clear_all: "Zrušit vše"
         unlist_topics: "Odebrat témata ze seznamu"
         relist_topics: "Znovunačíst seznam témat"
-        reset_read: "reset přečteného"
+        defer: "Odložit"
         delete: "Smazat témata"
         dismiss: "Označit jako přečtené"
         dismiss_read: "Označit všechno nepřečtené jako přečtené"
@@ -1919,17 +1903,6 @@ cs:
         when: "Když:"
         time_frame_required: "Vyberte prosím časové období"
         duration: "Doba trvání"
-      auto_update_input:
-        none: "Vyberte časové období"
-        later_today: "Později během dnešního dne"
-        tomorrow: "Zítra"
-        later_this_week: "Později během tohoto týdne"
-        this_weekend: "Tento týden"
-        next_week: "Další týden"
-        next_month: "Další měsíc"
-        forever: "Navždy"
-        pick_date_and_time: "Vyberte datum a čas"
-        set_based_on_last_post: "Zavřít na základě posledního příspěvku"
       publish_to_category:
         title: "Naplánovat publikování"
       temp_open:
@@ -1963,17 +1936,10 @@ cs:
         replies_short: "%{current} / %{total}"
       progress:
         title: pozice v tématu
-        go_top: "nahoru"
-        go_bottom: "dolů"
-        go: "go"
-        jump_bottom: "na poslední příspěvek"
         jump_prompt: "přejít na..."
         jump_prompt_long: "Přejít na..."
-        jump_bottom_with_number: "Skočit na příspěvěk %{post_number}"
         jump_prompt_to_date: "do data"
         jump_prompt_or: "nebo"
-        total: celkem příspěvků
-        current: aktuální příspěvek
       notifications:
         title: změňte, jak často budete upozornění na toto téma
         reasons:
@@ -2029,8 +1995,6 @@ cs:
         unpin: "Odstranit připevnění"
         unarchive: "Navrátit z archivu"
         archive: "Archivovat téma"
-        invisible: "Zneviditelnit"
-        visible: "Zviditelnit"
         reset_read: "Vynulovat počet čtení"
         make_private: "Vytvořit soukromou zprávu "
         reset_bump_date: "Resetovat datum zvýraznění"
@@ -2043,7 +2007,6 @@ cs:
         title: "Odpovědět"
         help: "Začít psát odpověď na toto téma"
       share:
-        title: "Sdílet"
         help: "sdílet odkaz na toto téma"
         invite_users: "Pozvat"
       print:
@@ -2353,6 +2316,8 @@ cs:
       tags: "Štítky"
       tags_placeholder: "(Volitelné) seznam dovolených štítků"
       tag_groups_placeholder: "(Volitelné) seznam dovolených skupin štítků"
+      required_tag_group:
+        delete: "Smazat"
       topic_featured_link_allowed: "Povolit zobrazené odkazy v této kategorii"
       delete: "Smazat kategorii"
       create: "Nová kategorie"
@@ -2535,6 +2500,9 @@ cs:
       unlisted:
         help: "Toto téma je neviditelné; nebude se zobrazovat v seznamu témat a lze ho navštívit pouze přes přímý odkaz"
     posts: "Příspěvků"
+    pending_posts:
+      label: "Čeká na schválení"
+      label_with_count: "Nevyřízeno (%{count})"
     original_post: "Původní příspěvek"
     views: "Zobrazení"
     views_lowercase:
@@ -2768,8 +2736,7 @@ cs:
         many: "Jsi si jist, že chceš smazat tento štítek a odstranit ho z %{count} témat, kterým je přiřazen?"
         other: "Jsi si jist, že chceš smazat tento štítek a odstranit ho z %{count} témat, kterým je přiřazen?"
       delete_confirm_no_topics: "Opravdu chceš smazat tento štítek? "
-      rename_tag: "Přejmenovat štítek"
-      rename_instructions: "Vyber název nového štítku:"
+      description: "Popis"
       sort_by: "Seřadit dle:"
       sort_by_count: "počtu"
       sort_by_name: "jména"
@@ -2845,6 +2812,21 @@ cs:
         leader: "vůdce"
     user_activity:
       no_replies_others: "Žádné odpovědi."
+    sidebar:
+      unread_count: "%{count} nepřečtené"
+      new_count: "%{count} nové"
+      sections:
+        categories:
+          header_link_title: "všechny kategorie"
+          header_link_text: "Kategorie"
+        topics:
+          header_link_title: "domů"
+          header_link_text: "Témata"
+          links:
+            tracked:
+              content: "Sledované"
+            my_posts:
+              content: "Mé příspěvky"
   admin_js:
     type_to_filter: "text pro filtrování..."
     admin:
@@ -3135,7 +3117,6 @@ cs:
         delete: "Smazat"
         color: "Barva"
         opacity: "Neprůhlednost"
-        copy: "Kopírovat"
         copy_to_clipboard: "Kopírovat do schránky"
         copied_to_clipboard: "Zkopírováno do schránky"
         copy_to_clipboard_error: "Při kopírování dat do schránky došlo k chybě"
@@ -3424,9 +3405,6 @@ cs:
         screened_ips:
           title: "Filtrované IP"
           delete_confirm: "Are you sure you want to remove the rule for %{ip_address}?"
-          roll_up_confirm: "Určitě chcete rolovat běžně screenované IP adresy do podsítí? "
-          rolled_up_some_subnets: "Úspěšně vyrolován IP ban k přístupu do těchto podsítí: %{subnets}."
-          rolled_up_no_subnet: "Není zde nic ke srolování."
           actions:
             block: "Zablokovat"
             do_nothing: "Povolit"

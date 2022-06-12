@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 RSpec.describe ListController do
   fab!(:user) { Fabricate(:user) }
   fab!(:topic) { Fabricate(:topic, user: user) }
@@ -142,15 +140,15 @@ RSpec.describe ListController do
   end
 
   describe "filter private messages by tag" do
-    let(:user) { Fabricate(:user) }
-    let(:moderator) { Fabricate(:moderator) }
-    let(:admin) { Fabricate(:admin) }
+    fab!(:user) { Fabricate(:user) }
+    fab!(:moderator) { Fabricate(:moderator) }
+    fab!(:admin) { Fabricate(:admin) }
     let(:tag) { Fabricate(:tag) }
     let(:private_message) { Fabricate(:private_message_topic, user: admin) }
 
     before do
       SiteSetting.tagging_enabled = true
-      SiteSetting.allow_staff_to_tag_pms = true
+      SiteSetting.pm_tags_allowed_for_groups = "1|2|3"
       Fabricate(:topic_tag, tag: tag, topic: private_message)
     end
 
@@ -160,8 +158,8 @@ RSpec.describe ListController do
       expect(response.status).to eq(404)
     end
 
-    it 'should fail for staff users if disabled' do
-      SiteSetting.allow_staff_to_tag_pms = false
+    it 'should fail for staff users if empty' do
+      SiteSetting.pm_tags_allowed_for_groups = ""
 
       [moderator, admin].each do |user|
         sign_in(user)
@@ -191,7 +189,7 @@ RSpec.describe ListController do
   end
 
   describe '#private_messages_group' do
-    let(:user) { Fabricate(:user) }
+    fab!(:user) { Fabricate(:user) }
 
     describe 'with personal_messages disabled' do
       let!(:topic) { Fabricate(:private_message_topic, allowed_groups: [group]) }
@@ -640,6 +638,26 @@ RSpec.describe ListController do
       expect(json["topic_list"]["topics"].size).to eq(2)
     end
 
+    context "unicode usernames" do
+      before do
+        SiteSetting.unicode_usernames = true
+      end
+
+      it "should return the more_topics_url in the encoded form" do
+        stub_const(TopicQuery, "DEFAULT_PER_PAGE_COUNT", 1) do
+          user.update!(username: "快快快")
+
+          get "/topics/created-by/#{UrlHelper.encode(user.username)}.json"
+
+          expect(response.status).to eq(200)
+
+          json = response.parsed_body
+
+          expect(json["topic_list"]["more_topics_url"]).to eq("/topics/created-by/%E5%BF%AB%E5%BF%AB%E5%BF%AB?page=1")
+        end
+      end
+    end
+
     context 'when `hide_profile_and_presence` is true' do
       before do
         user.user_option.update_columns(hide_profile_and_presence: true)
@@ -732,10 +750,10 @@ RSpec.describe ListController do
   end
 
   describe "#private_messages_warnings" do
-    let(:target_user) { Fabricate(:user) }
-    let(:admin) { Fabricate(:admin) }
-    let(:moderator1) { Fabricate(:moderator) }
-    let(:moderator2) { Fabricate(:moderator) }
+    fab!(:target_user) { Fabricate(:user) }
+    fab!(:admin) { Fabricate(:admin) }
+    fab!(:moderator1) { Fabricate(:moderator) }
+    fab!(:moderator2) { Fabricate(:moderator) }
 
     let(:create_args) do
       { title: 'you need a warning buddy!',
@@ -921,6 +939,17 @@ RSpec.describe ListController do
       get "/c/#{category2.slug}/#{category2.id}.json"
       expect(response.parsed_body['topic_list']['shared_drafts'].map { |t| t['id'] }).to contain_exactly(shared_draft_topic.id)
       expect(response.parsed_body['topic_list']['topics'].map { |t| t['id'] }).to contain_exactly(topic2.id)
+    end
+  end
+
+  describe "body class" do
+    it "pre-renders the correct body class for categories" do
+      c = Fabricate(:category, slug: 'myparentslug')
+      sub_c = Fabricate(:category, parent_category: c, slug: 'mychildslug')
+
+      get "/c/#{c.slug}/#{sub_c.slug}/#{sub_c.id}"
+
+      expect(response.body).to have_tag "body", with: { class: "category-myparentslug-mychildslug" }
     end
   end
 end

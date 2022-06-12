@@ -23,6 +23,7 @@ function getOpts(opts) {
       formatUsername,
       watchedWordsReplace: context.site.watched_words_replace,
       watchedWordsLink: context.site.watched_words_link,
+      additionalOptions: context.site.markdown_additional_options,
     },
     opts
   );
@@ -141,7 +142,7 @@ export function excerpt(cooked, length) {
 
     if (element.nodeType === Node.TEXT_NODE) {
       if (resultLength + element.textContent.length > length) {
-        const text = element.textContent.substr(0, length - resultLength);
+        const text = element.textContent.slice(0, length - resultLength);
         result += encode(text);
         result += "&hellip;";
         resultLength += text.length;

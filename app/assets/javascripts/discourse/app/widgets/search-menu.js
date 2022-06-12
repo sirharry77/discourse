@@ -1,4 +1,8 @@
-import { isValidSearchTerm, searchForTerm } from "discourse/lib/search";
+import {
+  isValidSearchTerm,
+  searchForTerm,
+  updateRecentSearches,
+} from "discourse/lib/search";
 import DiscourseURL from "discourse/lib/url";
 import { createWidget } from "discourse/widgets/widget";
 import discourseDebounce from "discourse-common/lib/debounce";
@@ -194,6 +198,7 @@ export default createWidget("search-menu", {
   defaultState(attrs) {
     return {
       inTopicContext: attrs.inTopicContext,
+      inPMInboxContext: this.search?.searchContext?.type === "private_messages",
       _lastEnterTimestamp: null,
       _debouncer: null,
     };
@@ -212,6 +217,8 @@ export default createWidget("search-menu", {
 
       if (searchContext?.type === "topic") {
         query += encodeURIComponent(` topic:${searchContext.id}`);
+      } else if (searchContext?.type === "private_messages") {
+        query += encodeURIComponent(` in:messages`);
       }
 
       if (query) {
@@ -232,7 +239,6 @@ export default createWidget("search-menu", {
 
   panelContents() {
     let searchInput = [];
-
     if (this.state.inTopicContext) {
       searchInput.push(
         this.attach("button", {
@@ -241,6 +247,17 @@ export default createWidget("search-menu", {
           title: "search.in_this_topic_tooltip",
           className: "btn btn-small search-context",
           action: "clearTopicContext",
+          iconRight: true,
+        })
+      );
+    } else if (this.state.inPMInboxContext) {
+      searchInput.push(
+        this.attach("button", {
+          icon: "times",
+          label: "search.in_messages",
+          title: "search.in_messages_tooltip",
+          className: "btn btn-small search-context",
+          action: "clearPMInboxContext",
           iconRight: true,
         })
       );
@@ -298,6 +315,7 @@ export default createWidget("search-menu", {
           suggestionKeyword: searchData.suggestionKeyword,
           suggestionResults: searchData.suggestionResults,
           searchTopics: SearchHelper.includesTopics(),
+          inPMInboxContext: this.state.inPMInboxContext,
         })
       );
     }
@@ -330,6 +348,11 @@ export default createWidget("search-menu", {
 
   clearTopicContext() {
     this.sendWidgetAction("clearContext");
+  },
+
+  clearPMInboxContext() {
+    this.state.inPMInboxContext = false;
+    this.sendWidgetAction("focusSearchInput");
   },
 
   keyDown(e) {
@@ -442,6 +465,7 @@ export default createWidget("search-menu", {
     if (e.target === searchInput && e.which === 8 /* backspace */) {
       if (!searchInput.value) {
         this.clearTopicContext();
+        this.clearPMInboxContext();
       }
     }
   },
@@ -456,6 +480,9 @@ export default createWidget("search-menu", {
       searchData.loading = true;
       cancel(this.state._debouncer);
       SearchHelper.perform(this);
+      if (this.currentUser) {
+        updateRecentSearches(this.currentUser, searchData.term);
+      }
     } else {
       searchData.loading = false;
       if (!this.state.inTopicContext) {
@@ -499,7 +526,7 @@ export default createWidget("search-menu", {
   },
 
   searchContext() {
-    if (this.state.inTopicContext) {
+    if (this.state.inTopicContext || this.state.inPMInboxContext) {
       return this.search.searchContext;
     }
 

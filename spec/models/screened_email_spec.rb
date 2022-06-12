@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe ScreenedEmail do
 
   let(:email) { 'block@spamfromhome.org' }
@@ -34,7 +32,7 @@ describe ScreenedEmail do
         expect(record.action_type).to eq(ScreenedEmail.actions[:block])
       end
 
-      it 'lets action_type be overriden' do
+      it 'lets action_type be overridden' do
         record = ScreenedEmail.block(email, action_type: ScreenedEmail.actions[:do_nothing])
         expect(record).not_to be_new_record
         expect(record.email).to eq(email)

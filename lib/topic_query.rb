@@ -75,6 +75,7 @@ class TopicQuery
          guardian
          no_definitions
          destination_category_id
+         include_all_pms
          include_pms)
   end
 
@@ -344,17 +345,26 @@ class TopicQuery
                regular: TopicUser.notification_levels[:regular], tracking: TopicUser.notification_levels[:tracking])
   end
 
+  # Any changes here will need to be reflected in `lib/topic-list-tracked-filter.js` for the `isTrackedTopic` function on
+  # the client side. The `f=tracked` query param is not heavily used so we do not want to be querying for a topic's
+  # tracked status by default. Instead, the client will handle the filtering when the `f=tracked` query params is present.
   def self.tracked_filter(list, user_id)
+    tracked_category_ids_sql = <<~SQL
+    SELECT cd.category_id FROM category_users cd
+    WHERE cd.user_id = :user_id AND cd.notification_level >= :tracking
+    SQL
+
+    has_sub_sub_categories = SiteSetting.max_category_nesting == 3
+
     sql = +<<~SQL
       topics.category_id IN (
-        SELECT cu.category_id FROM category_users cu
-        WHERE cu.user_id = :user_id AND cu.notification_level >= :tracking
-      )
-      OR topics.category_id IN (
-        SELECT c.id FROM categories c WHERE c.parent_category_id IN (
-          SELECT cd.category_id FROM category_users cd
-          WHERE cd.user_id = :user_id AND cd.notification_level >= :tracking
-        )
+        SELECT
+          c.id
+        FROM categories c
+        #{has_sub_sub_categories ? "LEFT JOIN categories parent_categories ON parent_categories.id = c.parent_category_id" : ""}
+        WHERE (c.id IN (#{tracked_category_ids_sql}))
+        OR c.parent_category_id IN (#{tracked_category_ids_sql})
+        #{has_sub_sub_categories ? "OR (parent_categories.id IS NOT NULL AND parent_categories.parent_category_id IN (#{tracked_category_ids_sql}))" : ""}
       )
     SQL
 
@@ -709,8 +719,12 @@ class TopicQuery
 
     all_listable_topics = @guardian.filter_allowed_categories(Topic.unscoped.listable_topics)
 
-    if options[:include_pms]
-      all_pm_topics = Topic.unscoped.private_messages_for_user(@user)
+    if options[:include_pms] || options[:include_all_pms]
+      all_pm_topics = if options[:include_all_pms] && @guardian.is_admin?
+        Topic.unscoped.private_messages
+      else
+        Topic.unscoped.private_messages_for_user(@user)
+      end
       result = result.merge(all_listable_topics.or(all_pm_topics))
     else
       result = result.merge(all_listable_topics)
@@ -788,9 +802,7 @@ class TopicQuery
 
     if (filter = (options[:filter] || options[:f])) && @user
       action =
-        if filter == "bookmarked"
-          PostActionType.types[:bookmark]
-        elsif filter == "liked"
+        if filter == "liked"
           PostActionType.types[:like]
         end
       if action
@@ -841,10 +853,12 @@ class TopicQuery
         .references("cu")
         .joins("LEFT JOIN category_users ON category_users.category_id = topics.category_id AND category_users.user_id = #{user.id}")
         .where("topics.category_id = :category_id
-                OR COALESCE(category_users.notification_level, :default) <> :muted
+                OR
+                (COALESCE(category_users.notification_level, :default) <> :muted AND (topics.category_id IS NULL OR topics.category_id NOT IN(:indirectly_muted_category_ids)))
                 OR tu.notification_level > :regular",
                 category_id: category_id || -1,
                 default: CategoryUser.default_notification_level,
+                indirectly_muted_category_ids: CategoryUser.indirectly_muted_category_ids(user).presence || [-1],
                 muted: CategoryUser.notification_levels[:muted],
                 regular: TopicUser.notification_levels[:regular])
     elsif SiteSetting.mute_all_categories_by_default

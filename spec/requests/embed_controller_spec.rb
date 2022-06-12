@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe EmbedController do
 
   let(:embed_url) { "http://eviltrout.com/2013/02/10/why-discourse-uses-emberjs.html" }
@@ -158,6 +156,14 @@ describe EmbedController do
         expect(response.body).to match("data-referer=\"\\*\"")
       end
 
+      it "disallows indexing the embed topic list" do
+        topic = Fabricate(:topic)
+        get '/embed/topics?discourse_embed_id=de-1234', headers: {
+          'REFERER' => 'https://example.com/evil-trout'
+        }
+        expect(response.status).to eq(200)
+        expect(response.headers['X-Robots-Tag']).to match(/noindex/)
+      end
     end
   end
 

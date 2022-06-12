@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'rails_helper'
-
 describe PrivateMessageTopicTrackingState do
   fab!(:user) { Fabricate(:user) }
   fab!(:user_2) { Fabricate(:user) }
@@ -140,6 +138,7 @@ describe PrivateMessageTopicTrackingState do
       expect(data['payload']['last_read_post_number']).to eq(nil)
       expect(data['payload']['highest_post_number']).to eq(1)
       expect(data['payload']['group_ids']).to eq([group.id])
+      expect(data['payload']['created_by_user_id']).to eq(group_message.user_id)
     end
   end
 
@@ -162,6 +161,7 @@ describe PrivateMessageTopicTrackingState do
       expect(data['topic_id']).to eq(private_message.id)
       expect(data['payload']['last_read_post_number']).to eq(1)
       expect(data['payload']['highest_post_number']).to eq(1)
+      expect(data['payload']['created_by_user_id']).to eq(private_message.first_post.user_id)
       expect(data['payload']['notification_level'])
         .to eq(NotificationLevels.all[:watching])
       expect(data['payload']['group_ids']).to eq([])

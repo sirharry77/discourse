@@ -26,25 +26,31 @@
     lastVisitedTopic=lastVisitedTopic
     discoveryList=discoveryList
     hideCategory=hideCategory)
-  tagName=""
-  connectorTagName=""}}
+ }}
 
 <tbody class="topic-list-body">
-  {{#each filteredTopics as |topic|}}
+  {{#each filteredTopics as |topic index|}}
     {{topic-list-item topic=topic
                       bulkSelectEnabled=bulkSelectEnabled
                       showTopicPostBadges=showTopicPostBadges
                       hideCategory=hideCategory
                       showPosters=showPosters
-                      hideMobileAvatar=hideMobileAvatar
                       showLikes=showLikes
                       showOpLikes=showOpLikes
                       expandGloballyPinned=expandGloballyPinned
                       expandAllPinned=expandAllPinned
                       lastVisitedTopic=lastVisitedTopic
                       selected=selected
-                      tagsForUser=tagsForUser}}
+                      lastChecked=lastChecked
+                      tagsForUser=tagsForUser
+                      focusLastVisitedTopic=focusLastVisitedTopic
+                      index=index}}
     {{raw "list/visited-line" lastVisitedTopic=lastVisitedTopic topic=topic}}
+    {{plugin-outlet
+      name="after-topic-list-item"
+      args=(hash topic=topic index=index)
+      connectorTagName="tr"
+    }}
   {{/each}}
 </tbody>
 
@@ -57,5 +63,4 @@
     lastVisitedTopic=lastVisitedTopic
     discoveryList=discoveryList
     hideCategory=hideCategory)
-  tagName=""
-  connectorTagName=""}}
+ }}

@@ -157,7 +157,7 @@ class Admin::EmailController < Admin::AdminController
     retry_count = 0
 
     begin
-      Jobs.enqueue(:process_email, mail: email_raw, retry_on_rate_limit: true, source: :handle_mail)
+      Jobs.enqueue(:process_email, mail: email_raw, retry_on_rate_limit: true, source: "handle_mail")
     rescue JSON::GeneratorError, Encoding::UndefinedConversionError => e
       if retry_count == 0
         email_raw = email_raw.force_encoding('iso-8859-1').encode("UTF-8")
@@ -171,7 +171,7 @@ class Admin::EmailController < Admin::AdminController
     # TODO: 2022-05-01 Remove this route once all sites have migrated over
     # to using the new email_encoded param.
     if deprecated_email_param_used
-      render plain: "warning: the email parameter is deprecated. all POST requests to this route should be sent with a base64 strict encoded encoded_email parameter instead. email has been received and is queued for processing"
+      render plain: "warning: the email parameter is deprecated. all POST requests to this route should be sent with a base64 strict encoded email_encoded parameter instead. email has been received and is queued for processing"
     else
       render plain: "email has been received and is queued for processing"
     end
@@ -206,6 +206,14 @@ class Admin::EmailController < Admin::AdminController
       if incoming_email.nil?
         email_local_part, email_domain = SiteSetting.notification_email.split('@')
         bounced_to_address = "#{email_local_part}+verp-#{email_log.bounce_key}@#{email_domain}"
+        incoming_email = IncomingEmail.find_by(to_addresses: bounced_to_address)
+      end
+
+      # Temporary fix until all old format of emails has been purged via lib/email/cleaner.rb
+      if incoming_email.nil?
+        email_local_part, email_domain = SiteSetting.reply_by_email_address.split('@')
+        subdomain, root_domain, extension = email_domain&.split('.')
+        bounced_to_address = "#{subdomain}+verp-#{email_log.bounce_key}@#{root_domain}.#{extension}"
         incoming_email = IncomingEmail.find_by(to_addresses: bounced_to_address)
       end
 

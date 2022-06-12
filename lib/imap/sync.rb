@@ -138,7 +138,7 @@ module Imap
         else
           # try finding email by message-id instead, we may be able to set the uid etc.
           incoming_email = IncomingEmail.where(
-            message_id: Email.message_id_clean(email['ENVELOPE'].message_id),
+            message_id: Email::MessageIdService.message_id_clean(email['ENVELOPE'].message_id),
             imap_uid: nil,
             imap_uid_validity: nil
           ).where("to_addresses LIKE ?", "%#{@group.email_username}%").first
@@ -407,7 +407,7 @@ module Imap
     end
 
     def tagging_enabled?
-      SiteSetting.tagging_enabled && SiteSetting.allow_staff_to_tag_pms
+      Guardian.new(Discourse.system_user).can_tag_pms?
     end
   end
 end
