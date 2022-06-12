@@ -15,7 +15,6 @@ import I18n from "I18n";
 import { Promise } from "rsvp";
 import { QUOTE_REGEXP } from "discourse/lib/quote";
 import RestModel from "discourse/models/rest";
-import Site from "discourse/models/site";
 import Topic from "discourse/models/topic";
 import User from "discourse/models/user";
 import bootbox from "bootbox";
@@ -1333,7 +1332,6 @@ Composer.reopenClass({
   create(args) {
     args = args || {};
     args.user = args.user || User.current();
-    args.site = args.site || Site.current();
     return this._super(args);
   },
 

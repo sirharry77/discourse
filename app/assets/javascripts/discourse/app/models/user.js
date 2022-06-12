@@ -274,10 +274,7 @@ const User = RestModel.extend({
 
   @discourseComputed("trust_level")
   trustLevel(trustLevel) {
-    return Site.currentProp("trustLevels").findBy(
-      "id",
-      parseInt(trustLevel, 10)
-    );
+    return this.site.trustLevels.findBy("id", parseInt(trustLevel, 10));
   },
 
   isBasic: equal("trust_level", 0),

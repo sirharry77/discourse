@@ -107,10 +107,15 @@ RestModel.reopenClass({
     // store. In that case the injections are not made, so we do them here. Eventually
     // we should use the store for everything to fix this.
     if (!args.store) {
-      args.store = owner.lookup("service:store");
+      args.store ||= owner.lookup("service:store");
     }
+
     if (!args.siteSettings) {
       args.siteSettings = owner.lookup("site-settings:main");
+    }
+
+    if (!args.site) {
+      args.site = owner.lookup("site:main");
     }
 
     args.__munge = this.munge;
