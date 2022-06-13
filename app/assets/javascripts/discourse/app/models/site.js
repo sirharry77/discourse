@@ -21,6 +21,57 @@ const Site = RestModel.extend({
     this.topicCountDesc = ["topic_count:desc"];
   },
 
+  get categories() {
+    if (!this._categories) {
+      this.initializeCategories();
+    }
+
+    return this._categories;
+  },
+
+  get categoriesById() {
+    if (!this._categoriesById) {
+      this.initializeCategories();
+    }
+
+    return this._categoriesById;
+  },
+
+  initializeCategories() {
+    let subcatMap = {};
+
+    this._categoriesById = {};
+    this._categories = (this._rawCategoryData || []).map((c) => {
+      if (c.parent_category_id) {
+        subcatMap[c.parent_category_id] = subcatMap[c.parent_category_id] || [];
+        subcatMap[c.parent_category_id].push(c.id);
+      }
+      return (this._categoriesById[c.id] = this.store.createRecord(
+        "category",
+        c
+      ));
+    });
+
+    // Associate the categories with their parents
+    this._categories.forEach((c) => {
+      let subcategoryIds = subcatMap[c.get("id")];
+
+      if (subcategoryIds) {
+        c.set(
+          "subcategories",
+          subcategoryIds.map((id) => this._categoriesById[id])
+        );
+      }
+
+      if (c.get("parent_category_id")) {
+        c.set(
+          "parentCategory",
+          this._categoriesById[c.get("parent_category_id")]
+        );
+      }
+    });
+  },
+
   @discourseComputed("notification_types")
   notificationLookup(notificationTypes) {
     const result = [];
@@ -151,43 +202,11 @@ Site.reopenClass(Singleton, {
     return store.createRecord("site", siteAttributes);
   },
 
-  create() {
-    const result = this._super.apply(this, arguments);
-    const store = result.store;
+  create(data) {
+    data._rawCategoryData = data.categories;
+    delete data.categories;
 
-    if (result.categories) {
-      let subcatMap = {};
-
-      result.categoriesById = {};
-      result.categories = result.categories.map((c) => {
-        if (c.parent_category_id) {
-          subcatMap[c.parent_category_id] =
-            subcatMap[c.parent_category_id] || [];
-          subcatMap[c.parent_category_id].push(c.id);
-        }
-        return (result.categoriesById[c.id] = store.createRecord(
-          "category",
-          c
-        ));
-      });
-
-      // Associate the categories with their parents
-      result.categories.forEach((c) => {
-        let subcategoryIds = subcatMap[c.get("id")];
-        if (subcategoryIds) {
-          c.set(
-            "subcategories",
-            subcategoryIds.map((id) => result.categoriesById[id])
-          );
-        }
-        if (c.get("parent_category_id")) {
-          c.set(
-            "parentCategory",
-            result.categoriesById[c.get("parent_category_id")]
-          );
-        }
-      });
-    }
+    const result = this._super(data);
 
     if (result.trust_levels) {
       result.trustLevels = Object.entries(result.trust_levels).map(
