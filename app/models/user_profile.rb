@@ -14,6 +14,8 @@ class UserProfile < ActiveRecord::Base
   validates :location, watched_words: true
 
   before_save :cook
+  before_save :clean_location, if: :location?
+
   after_save :trigger_badges
   after_save :pull_hotlinked_image
 
@@ -155,6 +157,10 @@ class UserProfile < ActiveRecord::Base
     else
       self.bio_cooked = nil
     end
+  end
+
+  def clean_location
+    self.location = PrettyText.cook(location).gsub(/<p>(.*)<\/p>/, "\\1")
   end
 
   def website_domain_validator
